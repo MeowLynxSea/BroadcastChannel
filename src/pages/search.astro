@@ -18,14 +18,21 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
 
 <Layout channel={channel}>
   <!-- 页面标题 -->
-  <section class="search-page">
+  <section class="search-page nb-box">
     <div class="search-container">
-      <h1 class="search-title">搜索</h1>
-      <p class="search-description">搜索站内内容，查找感兴趣的文章</p>
+      <h1 class="search-title">
+        <i class="ri-search-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        搜索
+        <span class="cursor-blink">_</span>
+      </h1>
+      <p class="search-description nb-box">
+        <i class="ri-information-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        搜索站内内容，查找感兴趣的文章
+      </p>
 
       <form class="search-form-main" action={searchAction} method="get">
         {GOOGLE_SEARCH_SITE ? <input type="hidden" name="as_sitesearch" value={GOOGLE_SEARCH_SITE} /> : null}
-        <div class="search-input-wrapper">
+        <div class="search-input-wrapper nb-box">
           <input
             type="text"
             name="q"
@@ -34,18 +41,22 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
             id="search-input"
             autofocus
           />
-          <button type="submit" class="search-button">
+          <button type="submit" class="btn btn-primary search-button">
+            <i class="ri-search-line" style="margin-right: 8px;"></i>
             搜索
           </button>
         </div>
       </form>
 
-      <div class="search-tips">
-        <h3>搜索提示</h3>
+      <div class="search-tips nb-box">
+        <h3 class="search-tips-title">
+          <i class="ri-lightbulb-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+          搜索提示
+        </h3>
         <ul>
-          <li>使用关键词搜索相关文章</li>
-          <li>支持中文和英文搜索</li>
-          <li>搜索结果按相关度排序</li>
+          <li><i class="ri-checkbox-circle-line" style="color: var(--accent-color); margin-right: 8px;"></i> 使用关键词搜索相关文章</li>
+          <li><i class="ri-checkbox-circle-line" style="color: var(--accent-color); margin-right: 8px;"></i> 支持中文和英文搜索</li>
+          <li><i class="ri-checkbox-circle-line" style="color: var(--accent-color); margin-right: 8px;"></i> 搜索结果按相关度排序</li>
         </ul>
       </div>
     </div>
@@ -76,6 +87,13 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
 </script>
 
 <style>
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .cursor-blink {
+    color: var(--accent-color);
+    animation: blink 1s infinite;
+  }
+
   .search-page {
     min-height: 60vh;
     display: flex;
@@ -92,11 +110,16 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
 
   .search-title {
     font-size: 42px;
-    font-weight: 600;
+    font-weight: 900;
     margin: 0 0 16px 0;
     letter-spacing: -0.02em;
     line-height: 1.2;
-    color: var(--foreground-color);
+    color: var(--fg-color);
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .search-description {
@@ -104,6 +127,15 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
     color: var(--secondary-color);
     margin: 0 0 48px 0;
     line-height: 1.6;
+    padding: 16px;
+    background-color: var(--code-background-color);
+    border: var(--border-width) solid var(--fg-color);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
   }
 
   .search-form-main {
@@ -112,15 +144,18 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
 
   .search-input-wrapper {
     display: flex;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
     overflow: hidden;
-    background-color: var(--background-color);
-    transition: border-color 0.2s ease;
+    background-color: var(--bg-color);
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    padding: 4px;
   }
 
   .search-input-wrapper:focus-within {
-    border-color: var(--foreground-color);
+    border-color: var(--accent-color);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transform: translate(-2px, -2px);
+    transition: all 0.2s ease;
   }
 
   .search-input {
@@ -130,7 +165,9 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
     outline: none;
     background: transparent;
     font-size: 16px;
-    color: var(--foreground-color);
+    color: var(--fg-color);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
   }
 
   .search-input::placeholder {
@@ -139,43 +176,53 @@ const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/se
 
   .search-button {
     padding: 16px 24px;
-    background-color: var(--foreground-color);
-    color: var(--background-color);
-    border: none;
-    font-weight: 500;
     font-size: 16px;
     cursor: pointer;
-    transition: opacity 0.2s ease;
-  }
-
-  .search-button:hover {
-    opacity: 0.8;
   }
 
   .search-tips {
     text-align: left;
     background-color: var(--code-background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: var(--border-width) solid var(--fg-color);
     padding: 24px;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
-  .search-tips h3 {
+  .search-tips:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
+  }
+
+  .search-tips-title {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 900;
     margin: 0 0 16px 0;
-    color: var(--foreground-color);
+    color: var(--fg-color);
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
   }
 
   .search-tips ul {
     margin: 0;
-    padding-left: 20px;
+    padding: 0;
+    list-style: none;
     color: var(--secondary-color);
     line-height: 1.6;
   }
 
   .search-tips li {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .search-tips li:last-child {
+    margin-bottom: 0;
   }
 
   @media (max-width: 768px) {

@@ -73,8 +73,10 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#ff5500" />
     <link rel="alternate" type="application/rss+xml" title={`${RSS_PREFIX}${channel?.title}`} href={RSS_URL} />
+    <!-- 引入 RemixIcon 图标库 (NEO-BRUTALISM 风格) -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style is:inline>
       @view-transition {
         navigation: auto; /* enabled */
@@ -92,31 +94,34 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
     <Fragment set:html={HEADER_INJECT} />
   </head>
 
-  <body>
-    <div id="wrapper">
+  <body class="nb-body">
+    <div id="wrapper" class="nb-box">
       <div id="container">
         <div id="main-container">
           <slot />
         </div>
         <div id="aside-container">
           <slot name="aside">
-            <div class="nav">
+            <div class="nav nb-box">
               <div class="nav-item">
-                <a href={SITE_URL} title={channel?.title} class={`nav-link ${pathname === '/' ? 'current' : ''}`}>
-                  Home
+                <a href={SITE_URL} title={channel?.title} class={`nav-link btn ${pathname === '/' ? 'current' : ''}`}>
+                  <i class="ri-home-line" style="margin-right: 8px;"></i>
+                  首页
                 </a>
               </div>
               <div class="nav-item">
-                <a href={`${SITE_URL}search`} title="Search" class={`nav-link ${pathname === '/search' || pathname.startsWith('/search/') ? 'current' : ''}`}>
-                  Search
+                <a href={`${SITE_URL}search`} title="Search" class={`nav-link btn ${pathname === '/search' || pathname.startsWith('/search/') ? 'current' : ''}`}>
+                  <i class="ri-search-line" style="margin-right: 8px;"></i>
+                  搜索
                 </a>
               </div>
               <div class="nav-item">
                 <a
                   href={`${SITE_URL}tags`}
                   title="类别"
-                  class={`nav-link ${pathname === '/tags' ? 'current' : ''}`}
+                  class={`nav-link btn ${pathname === '/tags' ? 'current' : ''}`}
                 >
+                  <i class="ri-price-tag-3-line" style="margin-right: 8px;"></i>
                   类别
                 </a>
               </div>
@@ -126,9 +131,10 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
                     <a
                       href={`${SITE_URL}links`}
                       title="Links"
-                      class={`nav-link ${pathname === '/links' ? 'current' : ''}`}
+                      class={`nav-link btn ${pathname === '/links' ? 'current' : ''}`}
                     >
-                      Links
+                      <i class="ri-links-line" style="margin-right: 8px;"></i>
+                      链接
                     </a>
                   </div>
                 ) : null
@@ -136,7 +142,7 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
               {
                 navs.map((nav) => (
                   <div class="nav-item">
-                    <a href={nav.href} title={nav.title} target="_blank" rel="noopener" class="nav-link">
+                    <a href={nav.href} title={nav.title} target="_blank" rel="noopener" class="nav-link btn btn-accent">
                       {nav.title}
                     </a>
                   </div>
@@ -144,30 +150,32 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
               }
             </div>
             <input class="search-icon" name="icon" type="checkbox" placeholder="Search" />
-            <form class="search-form" action={searchAction} method="get">
+            <form class="search-form nb-box" action={searchAction} method="get">
               {GOOGLE_SEARCH_SITE ? <input type="hidden" name="as_sitesearch" value={GOOGLE_SEARCH_SITE} /> : null}
-              <input type="text" name="q" placeholder="Search" />
+              <input type="text" name="q" placeholder="搜索内容_" />
             </form>
-            <div class="copyright-wrap">
-              Powered by
+            <div class="copyright-wrap nb-box">
+              由
               <a
                 href="https://github.com/ccbikai/BroadcastChannel"
                 title="BroadcastChannel"
                 target="_blank"
                 rel="noopener"
+                class="btn btn-glitch"
+                style="margin: 0 8px;"
               >
-                BroadcastChannel
-              </a> &
-              <a href="https://github.com/Planetable/SiteTemplateSepia" title="Sepia" target="_blank" rel="noopener">
-                Sepia
-              </a>
+                BROADCASTCHANNEL
+              </a> 和
+              <a href="https://github.com/Planetable/SiteTemplateSepia" title="Sepia" target="_blank" rel="noopener" class="btn btn-glitch">
+                SEPIA
+              </a> 驱动
             </div>
           </slot>
         </div>
       </div>
     </div>
-    <a href="#wrapper" id="back-to-top" aria-label="Back to top">
-      <img {...backToTopIcon} alt="Back to Top" />
+    <a href="#wrapper" id="back-to-top" aria-label="Back to top" class="btn btn-accent">
+      <i class="ri-arrow-up-line" style="font-size: 20px;"></i>
     </a>
     <Fragment set:html={FOOTER_INJECT} />
   </body>

@@ -34,6 +34,10 @@ html {
   padding: 4px;
   appearance: none;
   outline: none;
+  font-family: var(--font-mono);
+  border: var(--border-width) solid var(--fg-color);
+  background: var(--bg-color);
+  box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
 
   &:after {
     content: '🔍';
@@ -42,10 +46,17 @@ html {
     position: absolute;
     top: 0;
     left: 0;
-    background-color: var(--background-color);
+    background-color: var(--bg-color);
     text-align: center;
     vertical-align: middle;
     line-height: 24px;
+  }
+
+  &:hover {
+    border-color: var(--accent-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--accent-color);
+    transform: translate(-2px, -2px);
+    transition: all 0.2s ease;
   }
 }
 
@@ -59,27 +70,39 @@ html {
   color: var(--secondary-color);
   padding: 8px;
   border-radius: var(--box-border-radius);
+  border: var(--border-width) solid var(--fg-color);
+  box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
 
   > input {
-    border: 1px solid var(--background-color);
+    border: var(--border-width) solid var(--fg-color);
     border-radius: var(--box-border-radius);
     background: var(--code-background-color);
     color: var(--secondary-color);
     outline: none;
+    font-family: var(--font-mono);
     font-size: 12px;
     line-height: 2.4;
     padding: 0 0.5em;
     box-sizing: border-box;
     width: 100%;
+    box-shadow: 2px 2px 0 transparent;
+    transition: all 0.2s ease;
+  }
+
+  > input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 4px 4px 0 var(--accent-color);
+    transform: translate(-2px, -2px);
   }
 }
 
 .copyright-wrap {
-  color: #666;
+  color: var(--secondary-color);
   line-height: 1.5;
   font-size: 14px;
   display: none;
   padding: 8px;
+  font-family: var(--font-mono);
 }
 
 @media screen and (min-width: 600px) {
@@ -111,8 +134,8 @@ html {
   color: var(--secondary-color);
   width: 32px;
   height: 32px;
-  border-radius: 100%;
-  border: none;
+  border-radius: 0px;
+  border: var(--border-width) solid var(--fg-color);
   font-size: 24px;
   text-decoration: none;
   opacity: 0;
@@ -120,9 +143,13 @@ html {
     opacity 0.3s,
     transform 0.3s;
   z-index: 1000;
+  font-family: var(--font-mono);
+  box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
 
   &:hover {
     transform: translateY(-3px);
+    border-color: var(--accent-color);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
   }
 
   &:active {
@@ -134,7 +161,7 @@ html {
   }
 }
 
-/* Use @scroll-timeline to control the display of the button */
+/* Use @scroll-timeline to control the display of button */
 @supports (animation-timeline: view()) {
   #back-to-top {
     display: flex;

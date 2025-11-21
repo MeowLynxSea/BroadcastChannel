@@ -389,14 +389,18 @@ const links = extractLinks(contentWithoutTitle || '');
 const attachments = extractAttachments(contentWithoutTitle || '');
 ---
 
-<article class="post-card">
+<article class="post-card nb-box">
   {/* 标题 - 只有当标题存在时才显示 */}
   {postTitle && (
-    <h2 class="post-title">{postTitle}</h2>
+    <div class="post-title-container">
+      <i class="ri-file-text-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+      <h2 class="post-title">{postTitle}</h2>
+    </div>
   )}
 
   {/* 第一行：日期 */}
   <div class="post-header">
+    <i class="ri-calendar-line" style="color: var(--accent-color); margin-right: 8px;"></i>
     <time datetime={post.datetime} class="post-date">
       {new Date(post.datetime).toLocaleDateString('zh-CN', {
         year: 'numeric',
@@ -415,7 +419,7 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     {/* 媒体展示 */}
     {mediaCount > 0 && (
       <div class="post-content-media">
-        <div class="media-container">
+        <div class="media-container nb-box">
           {isVideoUrl(mediaUrls[0]) ? (
             <video src={mediaUrls[0]} class="media-item"></video>
           ) : (
@@ -440,8 +444,9 @@ const attachments = extractAttachments(contentWithoutTitle || '');
   <div class="post-tags-section">
     {(postTags && postTags.length > 0) && (
       <div class="post-tags">
+        <i class="ri-price-tag-3-line" style="color: var(--accent-color); margin-right: 8px;"></i>
         {postTags.map((tag) => (
-          <a href={`/search/${tag}`} class="tag">
+          <a href={`/search/${tag}`} class="tag btn btn-glitch">
             #{tag}
           </a>
         ))}
@@ -453,12 +458,9 @@ const attachments = extractAttachments(contentWithoutTitle || '');
   {links.length > 0 && (
     <div class="post-links">
       {links.map((link, index) => (
-        <a href={link.url} class="link-tag" target="_blank" rel="noopener noreferrer">
+        <a href={link.url} class="link-tag nb-box" target="_blank" rel="noopener noreferrer">
           <span class="link-number">{index + 1}</span>
-          <svg class="link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-          </svg>
+          <i class="ri-external-link-line" style="color: var(--accent-color);"></i>
           <span class="link-domain">{link.domain}</span>
         </a>
       ))}
@@ -468,11 +470,8 @@ const attachments = extractAttachments(contentWithoutTitle || '');
   {attachments.length > 0 && (
     <div class="post-attachments">
       {attachments.map((attachment, index) => (
-        <a href={attachment.url} class="attachment-tag" target="_blank" rel="noopener noreferrer">
-          <svg class="attachment-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-            <polyline points="14,2 14,8 20,8"></polyline>
-          </svg>
+        <a href={attachment.url} class="attachment-tag nb-box" target="_blank" rel="noopener noreferrer">
+          <i class="ri-file-line" style="color: var(--accent-color);"></i>
           <span class="attachment-extension">{attachment.extension}</span>
         </a>
       ))}
@@ -481,36 +480,45 @@ const attachments = extractAttachments(contentWithoutTitle || '');
 
   {/* 第四行：阅读全文 */}
   <div class="post-footer">
-    <a href={`/posts/${post.id}`} class="read-more">
-      阅读全文
+    <a href={`/posts/${post.id}`} class="btn btn-primary">
+      阅读全文 ->
     </a>
   </div>
 </article>
 
 <style>
   .post-card {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    border: var(--border-width) solid var(--fg-color);
     border-radius: var(--box-border-radius);
     padding: 24px;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
   .post-card:hover {
-    border-color: var(--foreground-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
   }
 
   /* 标题样式 */
+  .post-title-container {
+    display: flex;
+    align-items: center;
+  }
+
   .post-title {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 900;
     line-height: 1.3;
-    margin: 0 0 8px 0;
-    color: var(--foreground-color);
+    margin: 0;
+    color: var(--fg-color);
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
   }
 
   /* 第一行：日期 */
@@ -518,6 +526,9 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     display: flex;
     justify-content: flex-start;
     align-items: center;
+    font-family: var(--font-mono);
+    font-weight: bold;
+    text-transform: uppercase;
   }
 
   .post-date {
@@ -578,7 +589,8 @@ const attachments = extractAttachments(contentWithoutTitle || '');
   .post-content {
     font-size: 15px;
     line-height: 1.6;
-    color: var(--foreground-color);
+    color: var(--fg-color);
+    font-family: var(--font-mono);
   }
 
   /* 媒体展示 */
@@ -594,7 +606,16 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     width: auto; /* 宽度根据媒体自适应 */
     border-radius: var(--box-border-radius);
     overflow: hidden;
-    border: 1px solid var(--border-color);
+    border: var(--border-width) solid var(--fg-color);
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    padding: 4px;
+  }
+
+  .media-container:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: calc(var(--shadow-distance) + 1px) calc(var(--shadow-distance) + 1px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
   .media-item {
@@ -604,10 +625,11 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     max-height: 160px; /* 媒体最大高度限制 */
     width: auto;
     object-fit: cover;
+    border-radius: 0px;
   }
 
   .media-container video {
-    background-color: #f0f0f0;
+    background-color: var(--code-background-color);
     pointer-events: none;
   }
 
@@ -615,13 +637,15 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     position: absolute;
     bottom: 8px;
     right: 8px;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
     font-size: 12px;
     font-weight: 600;
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: 0px;
     pointer-events: none;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
   }
 
   /* 第三行：标签 */
@@ -635,22 +659,25 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 8px;
+    align-items: center;
   }
 
   .tag {
     font-size: 12px;
-    color: var(--foreground-color);
-    background-color: var(--code-background-color);
+    color: var(--secondary-color);
     padding: 4px 12px;
-    border: 1px solid var(--border-color);
+    border: var(--border-width) solid var(--fg-color);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;
+    font-family: var(--font-mono);
   }
 
   .tag:hover {
-    background-color: var(--foreground-color);
-    color: var(--background-color);
+    color: var(--bg-color);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    animation: glitch-anim 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
   }
 
   /* 第四行：阅读全文 */
@@ -658,58 +685,6 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     display: flex;
     justify-content: flex-end; /* 靠右对齐 */
     margin-top: 4px;
-  }
-
-  .read-more {
-    color: var(--foreground-color);
-    font-weight: 500;
-    font-size: 14px;
-    text-decoration: none;
-    border-bottom: 1px solid var(--border-color);
-    transition: border-color 0.2s ease;
-  }
-
-  .read-more:hover {
-    border-bottom-color: var(--foreground-color);
-  }
-
-  /* 内容样式 */
-  .post-content :global(h1),
-  .post-content :global(h2),
-  .post-content :global(h3),
-  .post-content :global(h4),
-  .post-content :global(h5),
-  .post-content :global(h6) {
-    margin-top: 16px;
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
-
-  .post-content :global(p) {
-    margin-bottom: 12px;
-  }
-
-  .post-content :global(img:not(.card-thumbnail-single)) {
-    max-width: 100%;
-    height: auto;
-    border-radius: var(--box-border-radius);
-    border: 1px solid var(--border-color);
-    margin: 16px 0;
-  }
-
-  .post-content :global(a) {
-    color: var(--foreground-color);
-    border-bottom: 1px solid var(--border-color);
-    transition: border-color 0.2s ease;
-  }
-
-  .post-content :global(a:hover) {
-    border-bottom-color: var(--foreground-color);
-  }
-
-  /* 隐藏图片预览按钮 */
-  .post-content :global(.image-preview-button) {
-    display: none;
   }
 
   /* 链接标签 */
@@ -725,31 +700,36 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    background-color: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 4px;
+    border: var(--border-width) solid var(--fg-color);
+    border-radius: 0px;
     font-size: 11px;
-    color: #3b82f6;
+    color: var(--secondary-color);
     text-decoration: none;
     transition: all 0.2s ease;
+    font-family: var(--font-mono);
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
   .link-tag:hover {
-    background-color: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: translate(-1px, -1px);
+    box-shadow: calc(var(--shadow-distance) + 1px) calc(var(--shadow-distance) + 1px) 0 var(--accent-color);
   }
 
   .link-number {
     font-weight: 600;
-    background-color: #3b82f6;
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: 0px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 9px;
+    font-family: var(--font-mono);
   }
 
   .link-domain {
@@ -772,22 +752,68 @@ const attachments = extractAttachments(contentWithoutTitle || '');
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    background-color: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    border-radius: 4px;
+    border: var(--border-width) solid var(--fg-color);
+    border-radius: 0px;
     font-size: 11px;
-    color: #10b981;
+    color: var(--secondary-color);
     text-decoration: none;
     transition: all 0.2s ease;
+    font-family: var(--font-mono);
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
   .attachment-tag:hover {
-    background-color: rgba(16, 185, 129, 0.2);
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    transform: translate(-1px, -1px);
+    box-shadow: calc(var(--shadow-distance) + 1px) calc(var(--shadow-distance) + 1px) 0 var(--accent-color);
   }
 
   .attachment-extension {
     font-weight: 600;
+  }
+
+  /* 内容样式 */
+  .post-content :global(h1),
+  .post-content :global(h2),
+  .post-content :global(h3),
+  .post-content :global(h4),
+  .post-content :global(h5),
+  .post-content :global(h6) {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-weight: 900;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 12px;
+  }
+
+  .post-content :global(img:not(.card-thumbnail-single)) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--box-border-radius);
+    border: var(--border-width) solid var(--fg-color);
+    margin: 16px 0;
+  }
+
+  .post-content :global(a) {
+    color: var(--link-color);
+    border-bottom: var(--border-width) solid var(--border-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .post-content :global(a:hover) {
+    border-bottom-color: var(--accent-color);
+  }
+
+  /* 隐藏图片预览按钮 */
+  .post-content :global(.image-preview-button) {
+    display: none;
   }
 
   @media (max-width: 768px) {

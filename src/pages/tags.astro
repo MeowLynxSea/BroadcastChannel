@@ -63,13 +63,29 @@ const channelInfo = {
 
 <Layout channel={channelInfo}>
   <!-- 页面标题 -->
-  <section class="page-header fade-in-up">
-    <h1 class="page-title">内容类别</h1>
-    <p class="page-description">共发现 {sortedTags.length} 个标签，点击标签可查看相关内容</p>
+  <section class="page-header nb-box">
+    <div class="page-header-content">
+      <h1 class="page-title">
+        <i class="ri-price-tag-3-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        内容类别
+        <span class="cursor-blink">_</span>
+      </h1>
+      <p class="page-description nb-box">
+        <i class="ri-information-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        共发现 {sortedTags.length} 个标签
+      </p>
+    </div>
   </section>
 
   <!-- 标签云 -->
-  <section class="tag-cloud-section fade-in-up">
+  <section class="tag-cloud-section nb-box">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="ri-price-tag-3-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        标签云
+      </h2>
+      <div style="flex-grow: 1; border-bottom: 1px dashed var(--fg-color);"></div>
+    </div>
     {sortedTags.length > 0 ? (
       <div class="tag-cloud">
         {sortedTags.map(({ tag, count }, index) => {
@@ -88,10 +104,11 @@ const channelInfo = {
           return (
             <a
               href={`/search/${tag}`}
-              class="tag-cloud-item fade-in-up"
+              class="tag-cloud-item btn btn-glitch"
               style={`font-size: ${fontSize}rem; opacity: ${opacity}; animation-delay: ${index * 0.05}s`}
               title={`${count} 篇内容`}
             >
+              <i class="ri-price-tag-3-line" style="margin-right: 4px;"></i>
               #{tag}
               <span class="tag-count">({count})</span>
             </a>
@@ -99,45 +116,95 @@ const channelInfo = {
         })}
       </div>
     ) : (
-      <div class="no-tags">
-        <p>暂无标签</p>
-        <a href="/" class="back-home">返回首页</a>
+      <div class="no-tags nb-box">
+        <p>
+          <i class="ri-error-warning-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+          暂无标签
+        </p>
+        <a href="/" class="btn btn-primary">
+          <i class="ri-home-line" style="margin-right: 8px;"></i>
+          返回首页
+        </a>
       </div>
     )}
   </section>
-
-
 </Layout>
 
 <style>
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .cursor-blink {
+    color: var(--accent-color);
+    animation: blink 1s infinite;
+  }
+
   .page-header {
     text-align: center;
-    padding: 40px 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 40px;
     margin-bottom: 40px;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
   }
 
+  .page-header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
   .page-title {
     font-size: 36px;
-    font-weight: 600;
-    margin: 0 0 16px 0;
+    font-weight: 900;
+    margin: 0;
     letter-spacing: -0.02em;
     line-height: 1.2;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
   }
 
   .page-description {
     font-size: 16px;
+    line-height: 1.6;
     color: var(--secondary-color);
-    margin: 0;
+    padding: 16px;
+    background-color: var(--code-background-color);
+    border: var(--border-width) solid var(--fg-color);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
   }
 
   .tag-cloud-section {
     max-width: 800px;
     margin: 0 auto 60px auto;
-    padding: 0 40px;
+    padding: 40px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    border-bottom: var(--border-width) solid var(--fg-color);
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+  }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 0;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    background: var(--fg-color);
+    color: var(--bg-color);
+    padding: 5px 15px;
+    margin-right: 15px;
   }
 
   .tag-cloud {
@@ -152,46 +219,33 @@ const channelInfo = {
   .tag-cloud-item {
     display: inline-flex;
     align-items: center;
-    color: var(--foreground-color);
+    color: var(--secondary-color);
     padding: 8px 16px;
-    border-radius: 30px;
+    border: var(--border-width) solid var(--fg-color);
     text-decoration: none;
     font-weight: 500;
-    transition: all var(--animation-normal) var(--ease-out);
-    border: none;
-    background: none;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .tag-cloud-item::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--code-background-color);
-    border-radius: 30px;
-    transform: scale(0);
-    transition: transform var(--animation-normal) var(--ease-out);
-    z-index: -1;
+    transition: all 0.2s ease;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    background-color: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    font-size: 14px !important;
   }
 
   .tag-cloud-item:hover {
-    color: var(--foreground-color);
-    transform: translateY(-2px);
-  }
-
-  .tag-cloud-item:hover::before {
-    transform: scale(1);
+    color: var(--bg-color);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    animation: glitch-anim 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
   }
 
   .tag-count {
     font-size: 0.75em;
     margin-left: 4px;
     font-weight: 400;
-    opacity: 0.6;
+    opacity: 0.8;
   }
 
   .no-tags {
@@ -203,23 +257,13 @@ const channelInfo = {
     font-size: 18px;
     color: var(--secondary-color);
     margin-bottom: 24px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  .back-home {
-    display: inline-block;
-    padding: 12px 24px;
-    background-color: var(--foreground-color);
-    color: var(--background-color);
-    font-weight: 500;
-    text-decoration: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .back-home:hover {
-    opacity: 0.8;
-  }
-
-
 
   @media (max-width: 768px) {
     .page-header {
@@ -228,13 +272,12 @@ const channelInfo = {
 
     .page-title {
       font-size: 28px;
+      justify-content: center;
     }
 
     .tag-cloud-section {
-      padding: 0 20px;
+      padding: 20px;
     }
-
-
 
     .tag-cloud {
       gap: 12px;

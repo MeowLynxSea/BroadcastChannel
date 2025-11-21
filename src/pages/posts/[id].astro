@@ -326,51 +326,72 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
 
 <Layout channel={channel}>
   <!-- 面包屑导航 -->
-  <nav class="breadcrumb-nav fade-in-up">
-    <a href={SITE_URL} class="breadcrumb-link">首页</a>
+  <nav class="breadcrumb-nav nb-box fade-in-up">
+    <a href={SITE_URL} class="breadcrumb-link btn btn-glitch">
+      <i class="ri-home-line" style="margin-right: 8px;"></i>
+      首页
+    </a>
     {showMiddleBreadcrumb && (
       <>
         <span class="breadcrumb-separator">/</span>
-        <a href={sourcePage} class="breadcrumb-link">{sourceText}</a>
+        <a href={sourcePage} class="breadcrumb-link btn btn-glitch">{sourceText}</a>
       </>
     )}
     <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">详情</span>
+    <span class="breadcrumb-current">文章详情</span>
   </nav>
 
-  <!-- 文章头部 -->
-  <header class="post-header fade-in-up">
+  <!-- 文章详情和内容 -->
+  <article class="post-article nb-box fade-in-up">
+    <div class="section-header">
+      <h1 class="section-title">
+        <i class="ri-file-text-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        文章详情
+      </h1>
+      <div style="flex-grow: 1; border-bottom: 1px dashed var(--fg-color);"></div>
+    </div>
     <h1 class="post-title">{postTitle}</h1>
     <div class="post-meta">
-      <time datetime={post.datetime} class="post-date">
-        {datetime.format('YYYY年MM月DD日')}
-      </time>
-      <span class="post-time">{datetime.format('HH:mm')}</span>
+      <div class="meta-item">
+        <i class="ri-calendar-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        <time datetime={post.datetime} class="post-date">
+          {datetime.format('YYYY年MM月DD日')}
+        </time>
+      </div>
+      <div class="meta-item">
+        <i class="ri-time-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+        <span class="post-time">{datetime.format('HH:mm')}</span>
+      </div>
       {
         postTags && postTags.length > 0 && (
-          <div class="post-tags">
-            {postTags.map((tag) => (
-              <a href={`/search/${tag}`} class="tag">
-                #{tag}
-              </a>
-            ))}
+          <div class="meta-item">
+            <i class="ri-price-tag-3-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+            <div class="post-tags">
+              {postTags.map((tag) => (
+                <a href={`/search/${tag}`} class="tag btn btn-glitch">
+                  #{tag}
+                </a>
+              ))}
+            </div>
           </div>
         )
       }
     </div>
-  </header>
-
-  <!-- 文章内容 -->
-  <article class="post-article fade-in-up">
     <div class="post-content" set:html={processLinks(processedContent)} />
   </article>
 
   <!-- 评论区域 -->
   {
     COMMENTS && (
-      <section class="comments-section">
-        <h2 class="comments-title">评论</h2>
-        <div class="comments-container">
+      <section class="comments-section nb-box">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="ri-chat-3-line" style="color: var(--accent-color); margin-right: 8px;"></i>
+            评论区
+          </h2>
+          <div style="flex-grow: 1; border-bottom: 1px dashed var(--fg-color);"></div>
+        </div>
+        <div class="comments-container nb-box">
           <script
             is:inline
             async
@@ -386,16 +407,19 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
   }
 
   <!-- 返回按钮 -->
-  <div class="post-footer">
-    <a href={sourcePage} class="back-button">← 返回{sourceText}</a>
+  <div class="post-footer nb-box">
+    <a href={sourcePage} class="btn btn-primary back-button">
+      <i class="ri-arrow-left-line" style="margin-right: 8px;"></i>
+      返回{sourceText}
+    </a>
   </div>
 </Layout>
 
 <style>
   .breadcrumb-nav {
     padding: 20px 40px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
+    margin: 20px auto;
+    border: var(--border-width) solid var(--fg-color);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -403,6 +427,13 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .breadcrumb-nav:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
   .breadcrumb-link {
@@ -411,36 +442,76 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     border-bottom: none;
   }
 
-  .breadcrumb-link:hover {
-    color: var(--foreground-color);
-  }
-
   .breadcrumb-current {
-    color: var(--foreground-color);
-    font-weight: 500;
+    color: var(--fg-color);
+    font-weight: bold;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
   }
 
-  .post-header {
+  .breadcrumb-separator {
+    color: var(--secondary-color);
+    font-weight: bold;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    border-bottom: var(--border-width) solid var(--fg-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 0;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    background: var(--fg-color);
+    color: var(--bg-color);
+    padding: 5px 15px;
+    margin-right: 15px;
+  }
+
+  .post-article {
     max-width: 800px;
     margin: 0 auto 40px auto;
-    padding: 0 40px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 32px;
+    padding: 40px;
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .post-article:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
   .post-title {
     font-size: 32px;
-    font-weight: 600;
+    font-weight: 900;
     margin: 0 0 24px 0;
     letter-spacing: -0.02em;
     line-height: 1.2;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
   }
 
   .post-meta {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .meta-item {
+    display: flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 8px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    font-weight: bold;
   }
 
   .post-date,
@@ -458,30 +529,27 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
 
   .tag {
     font-size: 12px;
-    color: var(--foreground-color);
-    background-color: var(--code-background-color);
+    color: var(--secondary-color);
+    border: var(--border-width) solid var(--fg-color);
     padding: 4px 12px;
-    border: 1px solid var(--border-color);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;
+    font-family: var(--font-mono);
   }
 
   .tag:hover {
-    background-color: var(--foreground-color);
-    color: var(--background-color);
-  }
-
-  .post-article {
-    max-width: 800px;
-    margin: 0 auto 60px auto;
-    padding: 0 40px;
+    color: var(--bg-color);
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    animation: glitch-anim 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
   }
 
   .post-content {
     font-size: 16px;
     line-height: 1.7;
-    color: var(--foreground-color);
+    color: var(--fg-color);
+    font-family: var(--font-mono);
   }
 
   .post-content :global(h1),
@@ -492,8 +560,10 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
   .post-content :global(h6) {
     margin-top: 32px;
     margin-bottom: 20px;
-    font-weight: 600;
+    font-weight: 900;
     letter-spacing: -0.01em;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
   }
 
   .post-content :global(h1) {
@@ -523,37 +593,61 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     max-width: 100%;
     height: auto;
     border-radius: var(--box-border-radius);
-    border: 1px solid var(--border-color);
+    border: var(--border-width) solid var(--fg-color);
     margin: 24px 0;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(img:hover) {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
   }
 
   .post-content :global(a) {
-    color: var(--foreground-color);
-    border-bottom: 1px solid var(--border-color);
+    color: var(--fg-color);
+    border-bottom: var(--border-width) solid var(--border-color);
     transition: border-color 0.2s ease;
   }
 
   .post-content :global(a:hover) {
-    border-bottom-color: var(--foreground-color);
+    border-bottom-color: var(--accent-color);
   }
 
   .post-content :global(blockquote) {
     margin: 24px 0;
     padding: 20px;
-    border-left: 1px solid var(--border-color);
+    border-left: var(--border-width) solid var(--fg-color);
     background-color: var(--code-background-color);
     font-style: italic;
     color: var(--secondary-color);
+    font-family: var(--font-mono);
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .post-content :global(blockquote:hover) {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
   .post-content :global(pre) {
     background-color: var(--code-background-color);
-    border: 1px solid var(--border-color);
+    border: var(--border-width) solid var(--fg-color);
     border-radius: var(--box-border-radius);
     padding: 20px;
     overflow-x: auto;
     margin: 24px 0;
     font-size: 14px;
+    font-family: var(--font-mono);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .post-content :global(pre:hover) {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
   .post-content :global(code) {
@@ -561,6 +655,7 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     padding: 2px 4px;
     border-radius: 2px;
     font-size: 0.9em;
+    border: var(--border-width) solid var(--fg-color);
   }
 
   .post-content :global(ul),
@@ -573,267 +668,97 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     margin-bottom: 8px;
   }
 
-  /* Enhanced Media Styles - Black and White Minimalist Design */
-  .post-content :global(img) {
-    transition: all 0.3s ease;
-    filter: grayscale(0%);
-    border: none;
-    box-shadow: none;
-    cursor: default;
-  }
-
-  .post-content :global(img:hover) {
-    filter: grayscale(20%);
-    transform: scale(1.02);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Video Player Styles */
-  .post-content :global(video) {
-    width: 100%;
-    height: auto;
+  .comments-section {
     max-width: 800px;
-    max-height: 450px;
-    border-radius: var(--media-border-radius);
-    border: none;
-    background: #000;
-    box-shadow: none;
-    transition: all 0.3s ease;
-    cursor: default;
+    margin: 0 auto;
+    padding: 40px;
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
-  .post-content :global(video:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  .comments-section:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
-  /* Audio Player Styles */
-  .post-content :global(audio) {
-    width: 100%;
-    height: 54px;
-    border-radius: var(--media-border-radius);
-    border: 1px solid var(--border-color);
-    background-color: var(--code-background-color);
-    transition: all 0.3s ease;
+  .comments-title {
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
   }
 
-  .post-content :global(audio:hover) {
-    background-color: #f0f0f0;
-    border-color: var(--foreground-color);
-  }
-
-  /* Telegram Widget Message Styles */
-  .post-content :global(.tgme_widget_message) {
-    margin: 24px 0;
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-  }
-
-  .post-content :global(.tgme_widget_message_video),
-  .post-content :global(.tgme_widget_message_roundvideo) {
-    aspect-ratio: 1 / 1;
-    max-width: 800px;
-    max-height: 800px;
-    border: none;
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-    background: #000;
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_video:hover),
-  .post-content :global(.tgme_widget_message_roundvideo:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .post-content :global(.tgme_widget_message_voice) {
-    display: block !important;
-    background: var(--code-background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    padding: 16px;
-    margin: 16px 0;
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_voice:hover) {
-    background: #f0f0f0;
-    border-color: var(--foreground-color);
-  }
-
-  /* Link Preview Styles */
-  .post-content :global(.tgme_widget_message_link_preview) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-    transition: all 0.3s ease;
-    margin: 16px 0;
-  }
-
-  .post-content :global(.tgme_widget_message_link_preview:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border-color: var(--foreground-color);
-  }
-
-  .post-content :global(.tgme_widget_message_link_preview:has(.link_preview_image)) {
-    border: none;
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-  }
-
-  .post-content :global(.tgme_widget_message_link_preview .link_preview_image) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_link_preview:hover .link_preview_image) {
-    transform: scale(1.02);
-  }
-
-  .post-content :global(.tgme_widget_message_link_preview .link_preview_site_name) {
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    backdrop-filter: blur(4px);
+  .comments-container {
+    border: var(--border-width) solid var(--fg-color);
     border-radius: var(--box-border-radius);
-  }
-
-  /* Attachment/File Styles */
-  .post-content :global(.attachment-box) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    padding: 16px;
-    margin: 16px 0;
+    padding: 24px;
     background-color: var(--code-background-color);
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
-  .post-content :global(.attachment-box:hover) {
-    background-color: #f0f0f0;
-    border-color: var(--foreground-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  .comments-container:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
   }
 
-  .post-content :global(.attachment-box a) {
-    color: var(--foreground-color);
+  .post-footer {
+    text-align: center;
+    padding: 40px;
+    border-top: var(--border-width) solid var(--fg-color);
+    margin-top: 60px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .post-footer:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    transition: 0.2s ease;
+  }
+
+  .back-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--bg-color);
+    color: var(--fg-color);
+    border: var(--border-width) solid var(--fg-color);
+    border-radius: var(--box-border-radius);
     text-decoration: none;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: none;
-    transition: all 0.2s ease;
-  }
-
-  .post-content :global(.attachment-box a:hover) {
-    color: var(--foreground-color);
-    transform: translateX(2px);
-  }
-
-  /* Enhanced Link Styles */
-  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button)) {
-    color: var(--foreground-color);
-    text-decoration: none;
-    border-bottom: 1px solid var(--border-color);
-    transition: all 0.2s ease;
-    position: relative;
-    padding-bottom: 1px;
-  }
-
-  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):hover) {
-    border-bottom-color: var(--foreground-color);
-    color: var(--foreground-color);
-  }
-
-  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):after) {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background-color: var(--foreground-color);
-    transition: width 0.3s ease;
-  }
-
-  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):hover:after) {
-    width: 100%;
-  }
-
-  /* Unsupported Video Card Styles */
-  .post-content :global(.unsupported-video-card) {
-    display: block;
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-    transition: all 0.3s ease;
-    margin: 24px 0;
-    text-decoration: none;
-    width: 100%;
-    max-width: 400px;
-  }
-
-  .post-content :global(.unsupported-video-card:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border-color: var(--foreground-color);
-    transform: translateY(-2px);
-  }
-
-  .post-content :global(.unsupported-video-content) {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    background-color: var(--code-background-color);
-  }
-
-  .post-content :global(.video-icon) {
-    width: 48px;
-    height: 48px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    margin-right: 16px;
-    flex-shrink: 0;
-  }
-
-  .post-content :global(.video-info) {
-    flex: 1;
-  }
-
-  .post-content :global(.video-label) {
-    font-weight: 600;
-    font-size: 16px;
-    color: var(--foreground-color);
-    margin-bottom: 4px;
-    word-wrap: break-word;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .post-content :global(.video-duration) {
     font-size: 14px;
-    color: var(--secondary-color);
-    margin-bottom: 4px;
-    white-space: nowrap;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    transition: all 0.2s ease;
   }
 
-  .post-content :global(.view-in-telegram) {
-    font-size: 12px;
-    color: var(--secondary-color);
-    opacity: 0.8;
-    white-space: nowrap;
+  .back-button:hover {
+    background-color: var(--bg-color); /* 保持白色背景 */
+    color: var(--accent-color); /* 橙色文字 */
+    border-color: var(--accent-color); /* 橙色边框 */
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
   }
 
-  /* Enhanced Link Preview with Icon, Title and Domain */
+  .back-button:active {
+    transform: translate(var(--shadow-distance), var(--shadow-distance));
+    box-shadow: 0 0 0 var(--fg-color);
+    color: var(--accent-color); /* 确保active状态时文字可见 */
+    background-color: var(--bg-color); /* 保持白色背景 */
+  }
+
+  /* Link Preview Styles - Enhanced */
   .post-content :global(.link-preview-card) {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
+    border: var(--border-width) solid var(--fg-color);
+    border-radius: var(--box-border-radius);
     padding: 16px;
     margin: 16px 0;
     background-color: var(--code-background-color);
@@ -841,12 +766,13 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     text-decoration: none;
     color: inherit;
     text-align: left;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
   }
 
   .post-content :global(.link-preview-card:hover) {
-    background-color: #f0f0f0;
-    border-color: var(--foreground-color);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    border-color: var(--accent-color);
   }
 
   .post-content :global(.link-preview-header) {
@@ -859,26 +785,29 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
   .post-content :global(.link-preview-icon) {
     width: 24px;
     height: 24px;
-    border-radius: 4px;
+    border-radius: 0px;
     background-color: transparent;
-    color: var(--foreground-color);
+    color: var(--fg-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     font-size: 14px;
     flex-shrink: 0;
+    border: var(--border-width) solid var(--fg-color);
   }
 
   .post-content :global(.link-preview-title) {
     font-weight: 600;
     font-size: 16px;
     line-height: 1.4;
-    color: var(--foreground-color);
+    color: var(--fg-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
   }
 
   .post-content :global(.link-preview-domain) {
@@ -889,6 +818,7 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     gap: 4px;
     padding-left: 0;
     text-align: left;
+    font-family: var(--font-mono);
   }
 
   .post-content :global(.link-preview-domain::before) {
@@ -896,131 +826,12 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     font-size: 12px;
   }
 
-  /* Location Styles */
-  .post-content :global(.tgme_widget_message_location_wrap) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    overflow: hidden;
-    margin: 16px 0;
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_location_wrap:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border-color: var(--foreground-color);
-  }
-
-  .post-content :global(.tgme_widget_message_location) {
-    border: none;
-    border-radius: 0;
-  }
-
-  /* Sticker Styles */
-  .post-content :global(.tgme_widget_message_sticker) {
-    border-radius: var(--media-border-radius);
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_sticker:hover) {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-  }
-
-  .post-content :global(.sticker) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    transition: all 0.3s ease;
-  }
-
-  .post-content :global(.sticker:hover) {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Poll Styles */
-  .post-content :global(.tgme_widget_message_poll_options) {
-    border: 1px solid var(--border-color);
-    border-radius: var(--media-border-radius);
-    background-color: var(--code-background-color);
-    overflow: hidden;
-    margin: 16px 0;
-  }
-
-  .post-content :global(.tgme_widget_message_poll_option) {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-color);
-    transition: all 0.2s ease;
-  }
-
-  .post-content :global(.tgme_widget_message_poll_option:last-child) {
-    border-bottom: none;
-  }
-
-  .post-content :global(.tgme_widget_message_poll_option:hover) {
-    background-color: #f0f0f0;
-  }
-
-  /* Media Controls Customization */
-  .post-content :global(video::-webkit-media-controls-panel) {
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-  }
-
-  .post-content :global(audio::-webkit-media-controls-panel) {
-    background-color: var(--code-background-color);
-  }
-
-  .post-content :global(video::-webkit-media-controls-play-button),
-  .post-content :global(video::-webkit-media-controls-volume-slider) {
-    filter: invert(1);
-  }
-
-  /* Image Gallery Enhancement */
-  .post-content :global(.image-list-container) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 16px 0;
-  }
-
-  .post-content :global(.image-list-container img) {
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-    cursor: default;
-  }
-
-  .post-content :global(.image-list-container img:hover) {
-    filter: grayscale(20%);
-    transform: scale(1.02);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  }
-
-  .comments-section {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 40px 60px 40px;
-  }
-
-  .comments-title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 24px;
-    letter-spacing: -0.02em;
-  }
-
-  .comments-container {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--box-border-radius);
-    padding: 24px;
-  }
-
   @media (max-width: 768px) {
     .breadcrumb-nav,
-    .post-header,
     .post-article,
-    .comments-section {
-      padding-left: 20px;
-      padding-right: 20px;
+    .comments-section,
+    .post-footer {
+      padding: 20px;
     }
 
     .post-title {
@@ -1036,30 +847,9 @@ const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('H
     .post-content {
       font-size: 15px;
     }
-  }
 
-  .post-footer {
-    text-align: center;
-    padding: 40px 0;
-    border-top: 1px solid var(--border-color);
-    margin-top: 60px;
-  }
-
-  .back-button {
-    display: inline-block;
-    padding: 12px 24px;
-    background-color: var(--background-color);
-    color: var(--foreground-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--box-border-radius);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .back-button:hover {
-    border-color: var(--foreground-color);
-    transform: translateY(-1px);
+    .section-title {
+      font-size: 16px;
+    }
   }
 </style>
