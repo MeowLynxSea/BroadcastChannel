@@ -2,8 +2,8 @@ import * as cheerio from 'cheerio'
 import flourite from 'flourite'
 import { LRUCache } from 'lru-cache'
 import { $fetch } from 'ofetch'
-import { getEnv } from '../env'
-import prism from '../prism'
+import { getEnv } from '../env.js'
+import prism from '../prism.js'
 
 const cache = new LRUCache({
   ttl: 1000 * 60 * 5, // 5 minutes
@@ -34,20 +34,36 @@ function getImageStickers($, item, { staticProxy, index }) {
   })?.get()?.join('')
 }
 
-function getImages($, item, { staticProxy, id, index, title }) {
+function getImages($, item, { staticProxy, index, title }) {
   const images = $(item).find('.tgme_widget_message_photo_wrap')?.map((_index, photo) => {
     const url = $(photo).attr('style').match(/url\(["'](.*?)["']/)?.[1]
-    const popoverId = `modal-${id}-${_index}`
-    return `
-      <button class="image-preview-button image-preview-wrap" popovertarget="${popoverId}" popovertargetaction="show">
-        <img src="${staticProxy + url}" alt="${title}" loading="${index > 15 ? 'eager' : 'lazy'}" />
-      </button>
-      <button class="image-preview-button modal" id="${popoverId}" popovertarget="${popoverId}" popovertargetaction="hide" popover>
-        <img class="modal-img" src="${staticProxy + url}" alt="${title}" loading="lazy" />
-      </button>
-    `
+    return `<img src="${staticProxy + url}" alt="${title}" loading="${index > 15 ? 'eager' : 'lazy'}" />`
   })?.get()
   return images.length ? `<div class="image-list-container ${images.length % 2 === 0 ? 'image-list-even' : 'image-list-odd'}">${images?.join('')}</div>` : ''
+}
+
+function getUnsupportedVideo($, item) {
+  const unsupportedVideo = $(item).find('.tgme_widget_message_video_player.not_supported')
+
+  if (unsupportedVideo.length) {
+    const href = unsupportedVideo.attr('href')
+    const duration = $(item).find('.message_video_duration').text()
+
+    return `
+      <a href="${href}" target="_blank" class="unsupported-video-card">
+        <div class="unsupported-video-content">
+          <div class="video-icon">▶</div>
+          <div class="video-info">
+            <div class="video-label">Video</div>
+            ${duration ? `<div class="video-duration">${duration}</div>` : ''}
+            <div class="view-in-telegram">View in Telegram</div>
+          </div>
+        </div>
+      </a>
+    `
+  }
+
+  return ''
 }
 
 function getVideo($, item, { staticProxy, index }) {
@@ -126,6 +142,36 @@ function modifyHTMLContent($, content, { index } = {}) {
   return content
 }
 
+// Extract tags from content
+function extractTags(content) {
+  if (!content)
+    return []
+
+  // Get plain text content while preserving line breaks
+  const plainText = content
+    .replace(/<br\s*\/\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+
+  // Split by lines and filter empty lines
+  const lines = plainText.split('\n').filter(line => line.trim())
+
+  // Check if last line contains tags starting with #
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim()
+    // Use regex to match all tags starting with #
+    const tagMatches = lastLine.match(/#([^\s#]+)/g)
+
+    if (tagMatches && tagMatches.length > 0) {
+      // Remove # symbol, keep only tag name
+      return tagMatches.map(tag => tag.substring(1))
+    }
+  }
+
+  return []
+}
+
 function getPost($, item, { channel, staticProxy, index = 0 }) {
   item = item ? $(item).find('.tgme_widget_message') : $('.tgme_widget_message')
   const content = $(item).find('.js-message_reply_text')?.length > 0
@@ -134,29 +180,35 @@ function getPost($, item, { channel, staticProxy, index = 0 }) {
   const title = content?.text()?.match(/^.*?(?=[。\n]|http\S)/g)?.[0] ?? content?.text() ?? ''
   const id = $(item).attr('data-post')?.replace(new RegExp(`${channel}/`, 'i'), '')
 
-  const tags = $(content).find('a[href^="?q="]')?.each((_index, a) => {
+  const existingTags = $(content).find('a[href^="?q="]')?.each((_index, a) => {
     $(a)?.attr('href', `/search/${encodeURIComponent($(a)?.text())}`)
   })?.map((_index, a) => $(a)?.text()?.replace('#', ''))?.get()
+
+  // Extract tags from the last line of content
+  const contentTags = extractTags(content?.html())
+
+  // Combine existing tags with extracted tags (avoid duplicates)
+  const allTags = [...new Set([...(existingTags || []), ...contentTags])]
 
   return {
     id,
     title,
     type: $(item).attr('class')?.includes('service_message') ? 'service' : 'text',
     datetime: $(item).find('.tgme_widget_message_date time')?.attr('datetime'),
-    tags,
+    tags: allTags,
     text: content?.text(),
     content: [
       getReply($, item, { channel }),
-      getImages($, item, { staticProxy, id, index, title }),
-      getVideo($, item, { staticProxy, id, index, title }),
-      getAudio($, item, { staticProxy, id, index, title }),
+      getImages($, item, { staticProxy, index, title }),
+      getVideo($, item, { staticProxy, index }),
+      getAudio($, item, { staticProxy }),
+      getUnsupportedVideo($, item),
       content?.html(),
       getImageStickers($, item, { staticProxy, index }),
       getVideoStickers($, item, { staticProxy, index }),
       // $(item).find('.tgme_widget_message_sticker_wrap')?.html(),
       $(item).find('.tgme_widget_message_poll')?.html(),
       $.html($(item).find('.tgme_widget_message_document_wrap')),
-      $.html($(item).find('.tgme_widget_message_video_player.not_supported')),
       $.html($(item).find('.tgme_widget_message_location_wrap')),
       getLinkPreview($, item, { staticProxy, index }),
     ].filter(Boolean).join('').replace(/(url\(["'])((https?:)?\/\/)/g, (match, p1, p2, _p3) => {
@@ -172,6 +224,30 @@ function getPost($, item, { channel, staticProxy, index = 0 }) {
 }
 
 const unnessaryHeaders = ['host', 'cookie', 'origin', 'referer']
+
+// Get proxy settings from environment
+// This function is kept for future proxy functionality
+// eslint-disable-next-line no-unused-vars
+function _getProxyAgent() {
+  const httpProxy
+    // eslint-disable-next-line node/prefer-global/process
+    = process.env.HTTP_PROXY || process.env.http_proxy
+  const httpsProxy
+    // eslint-disable-next-line node/prefer-global/process
+    = process.env.HTTPS_PROXY || process.env.https_proxy
+
+  if (httpsProxy || httpProxy) {
+    try {
+      const { HttpsProxyAgent } = require('https-proxy-agent')
+      const proxyUrl = httpsProxy || httpProxy
+      return new HttpsProxyAgent(proxyUrl)
+    }
+    catch (error) {
+      console.warn('Failed to create proxy agent:', error.message)
+    }
+  }
+  return undefined
+}
 
 export async function getChannelInfo(Astro, { before = '', after = '', q = '', type = 'list', id = '' } = {}) {
   const cacheKey = JSON.stringify({ before, after, q, type, id })

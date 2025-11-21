@@ -1,0 +1,204 @@
+---
+import Layout from '../layouts/single-column.astro'
+import { getEnv } from '../lib/env'
+import { getChannelInfo } from '../lib/telegram'
+
+// 深拷贝 channel 对象，避免被其他页面的 SEO 设置污染
+const channel = JSON.parse(JSON.stringify(await getChannelInfo(Astro)))
+
+// 设置页面 SEO
+channel.seo = {
+  title: '搜索',
+  text: '搜索站内内容'
+}
+
+const GOOGLE_SEARCH_SITE = getEnv(import.meta.env, Astro, 'GOOGLE_SEARCH_SITE')
+const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/search/result'
+---
+
+<Layout channel={channel}>
+  <!-- 页面标题 -->
+  <section class="search-page">
+    <div class="search-container">
+      <h1 class="search-title">搜索</h1>
+      <p class="search-description">搜索站内内容，查找感兴趣的文章</p>
+
+      <form class="search-form-main" action={searchAction} method="get">
+        {GOOGLE_SEARCH_SITE ? <input type="hidden" name="as_sitesearch" value={GOOGLE_SEARCH_SITE} /> : null}
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            name="q"
+            placeholder="输入搜索关键词..."
+            class="search-input"
+            id="search-input"
+            autofocus
+          />
+          <button type="submit" class="search-button">
+            搜索
+          </button>
+        </div>
+      </form>
+
+      <div class="search-tips">
+        <h3>搜索提示</h3>
+        <ul>
+          <li>使用关键词搜索相关文章</li>
+          <li>支持中文和英文搜索</li>
+          <li>搜索结果按相关度排序</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+
+    // 聚焦搜索框
+    if (searchInput) {
+      searchInput.focus();
+    }
+
+    // 回车提交搜索
+    const searchForm = document.querySelector('.search-form-main');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        const query = searchInput.value.trim();
+        if (!query) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .search-page {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .search-container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .search-title {
+    font-size: 42px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--foreground-color);
+  }
+
+  .search-description {
+    font-size: 18px;
+    color: var(--secondary-color);
+    margin: 0 0 48px 0;
+    line-height: 1.6;
+  }
+
+  .search-form-main {
+    margin-bottom: 48px;
+  }
+
+  .search-input-wrapper {
+    display: flex;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--background-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .search-input-wrapper:focus-within {
+    border-color: var(--foreground-color);
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 16px 20px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    color: var(--foreground-color);
+  }
+
+  .search-input::placeholder {
+    color: var(--secondary-color);
+  }
+
+  .search-button {
+    padding: 16px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    border: none;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .search-button:hover {
+    opacity: 0.8;
+  }
+
+  .search-tips {
+    text-align: left;
+    background-color: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+  }
+
+  .search-tips h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--foreground-color);
+  }
+
+  .search-tips ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--secondary-color);
+    line-height: 1.6;
+  }
+
+  .search-tips li {
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .search-title {
+      font-size: 36px;
+    }
+
+    .search-description {
+      font-size: 16px;
+    }
+
+    .search-input {
+      padding: 14px 16px;
+      font-size: 16px;
+    }
+
+    .search-button {
+      padding: 14px 20px;
+      font-size: 16px;
+    }
+
+    .search-tips {
+      padding: 20px;
+    }
+  }
+</style>

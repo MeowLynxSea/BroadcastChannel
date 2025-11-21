@@ -26,3 +26,6 @@ pnpm-debug.log*
 .vercel
 .netlify
 .wrangler
+
+# local search data
+.data/

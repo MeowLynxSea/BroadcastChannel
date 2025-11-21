@@ -1,0 +1,317 @@
+---
+import Layout from '../layouts/single-column.astro'
+import { getEnv } from '../lib/env'
+import { getChannelInfo } from '../lib/telegram'
+
+// 深拷贝 channel 对象，避免被其他页面的 SEO 设置污染
+const { SITE_URL } = Astro.locals
+const channel = JSON.parse(JSON.stringify(await getChannelInfo(Astro)))
+const posts = channel.posts ?? []
+const GOOGLE_SEARCH_SITE = getEnv(import.meta.env, Astro, 'GOOGLE_SEARCH_SITE')
+---
+
+<Layout channel={channel}>
+  <!-- 页面标题 -->
+  <section class="page-header">
+    <h1 class="page-title">{channel?.title}</h1>
+    {channel?.descriptionHTML && (
+      <div class="page-description" set:html={channel.descriptionHTML} />
+    )}
+  </section>
+
+  <!-- 文章列表 -->
+  <section class="posts-list">
+    <div class="posts-container">
+      {posts.map((post) => (
+        <article class="post-card">
+          <div class="post-meta">
+            <time datetime={post.datetime} class="post-date">
+              {new Date(post.datetime).toLocaleDateString('zh-CN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </time>
+            <a href={`/posts/${post.id}`} class="post-permalink">
+              {new Date(post.datetime).toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
+            </a>
+          </div>
+          
+          {post.tags && post.tags.length > 0 && (
+            <div class="post-tags">
+              {post.tags.map((tag) => (
+                <a href={`/search/%23${tag}`} class="tag">#{tag}</a>
+              ))}
+            </div>
+          )}
+          
+          {post.content && (
+            <div class="post-content" set:html={post.content} />
+          )}
+          
+          <div class="post-footer">
+            <a href={`/posts/${post.id}`} class="read-more">阅读全文 →</a>
+          </div>
+        </article>
+      ))}
+    </div>
+    
+    <!-- 分页导航 -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        显示最近 {posts.length} 篇文章
+      </div>
+      <div class="pagination-nav">
+        <a href={`${SITE_URL}before/${posts[posts.length - 1]?.id}`} class="pagination-btn">
+          加载更早的文章 →
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .page-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .page-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--secondary-color);
+  }
+
+  .posts-list {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .posts-container {
+    display: grid;
+    gap: 32px;
+    margin-bottom: 60px;
+  }
+
+  .post-card {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    padding: 32px;
+    transition: all 0.2s ease;
+  }
+
+  .post-card:hover {
+    border-color: var(--foreground-color);
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .post-date {
+    font-size: 14px;
+    color: var(--secondary-color);
+    font-weight: 500;
+  }
+
+  .post-permalink {
+    font-size: 14px;
+    color: var(--secondary-color);
+    text-decoration: none;
+    border-bottom: none;
+  }
+
+  .post-permalink:hover {
+    color: var(--foreground-color);
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: var(--foreground-color);
+    background-color: var(--code-background-color);
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+  }
+
+  .post-content {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: var(--foreground-color);
+  }
+
+  .post-content :global(h1),
+  .post-content :global(h2),
+  .post-content :global(h3),
+  .post-content :global(h4),
+  .post-content :global(h5),
+  .post-content :global(h6) {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 16px;
+  }
+
+  .post-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--box-border-radius);
+    border: 1px solid var(--border-color);
+    margin: 16px 0;
+  }
+
+  .post-content :global(a) {
+    color: var(--foreground-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .post-content :global(a:hover) {
+    border-bottom-color: var(--foreground-color);
+  }
+
+  .post-content :global(blockquote) {
+    margin: 16px 0;
+    padding: 16px;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--code-background-color);
+    font-style: italic;
+    color: var(--secondary-color);
+  }
+
+  .post-content :global(pre) {
+    background-color: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    padding: 16px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  .post-content :global(code) {
+    background-color: var(--code-background-color);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-size: 0.9em;
+  }
+
+  .post-footer {
+    text-align: right;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+    margin-top: 20px;
+  }
+
+  .read-more {
+    color: var(--foreground-color);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .read-more:hover {
+    color: var(--secondary-color);
+  }
+
+  .pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .pagination-info {
+    font-size: 14px;
+    color: var(--secondary-color);
+    text-align: center;
+  }
+
+  .pagination-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: var(--box-border-radius);
+    transition: opacity 0.2s ease;
+  }
+
+  .pagination-btn:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 30px 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+
+    .posts-list {
+      padding: 0 20px;
+    }
+
+    .post-card {
+      padding: 24px;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .pagination-container {
+      padding: 30px 20px;
+    }
+  }
+</style>

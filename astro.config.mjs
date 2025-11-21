@@ -6,6 +6,7 @@ import vercel from '@astrojs/vercel'
 import sentry from '@sentry/astro'
 import { defineConfig } from 'astro/config'
 import { provider } from 'std-env'
+import searchIntegration from './src/integrations/search-integration.js'
 
 const providers = {
   vercel: vercel({
@@ -29,6 +30,7 @@ export default defineConfig({
   output: 'server',
   adapter: providers[adapterProvider] || providers.node,
   integrations: [
+    searchIntegration,
     ...(process.env.SENTRY_DSN
       ? [
           sentry({

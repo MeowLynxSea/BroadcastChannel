@@ -1,0 +1,312 @@
+---
+import '../assets/normalize.css'
+import '../assets/style.css'
+import '../assets/global.css'
+import '../assets/animations.css'
+import { SEO } from 'astro-seo'
+import { getEnv } from '../lib/env'
+import backToTopIcon from '../assets/back-to-top.svg'
+import searchIcon from '../assets/search.svg'
+
+const { SITE_URL, RSS_URL, RSS_PREFIX } = Astro.locals
+const { channel } = Astro.props
+
+const locale = getEnv(import.meta.env, Astro, 'LOCALE')
+
+const seo = channel?.seo
+const reqPathname = Astro.url.pathname.replace(/\/$/, '')
+const canonical = SITE_URL.startsWith('http') ? new URL(SITE_URL).origin + reqPathname : Astro.url.origin + reqPathname
+
+const { origin, pathname } = new URL(canonical)
+const twitter = getEnv(import.meta.env, Astro, 'TWITTER')
+
+const seoParams = {
+  title: seo?.title,
+  description: seo?.text ?? channel?.description,
+  canonical,
+  noindex: seo?.noindex ?? getEnv(import.meta.env, Astro, 'NOINDEX'),
+  nofollow: seo?.nofollow ?? getEnv(import.meta.env, Astro, 'NOFOLLOW'),
+  openGraph: {
+    basic: {
+      type: 'website',
+      title: channel?.title ?? '',
+      url: canonical,
+      image: channel?.avatar ? channel.avatar : origin + '/favicon.ico',
+    },
+    optional: {
+      description: seo?.text ?? channel?.description,
+      locale,
+    },
+  },
+  extend: {
+    link: [
+      {
+        rel: 'icon',
+        href: channel?.avatar
+          ? `https://wsrv.nl/?w=64&h=64&fit=cover&mask=circle&url=ssl:${channel?.avatar?.replace(/^https?:\/\//, '')}`
+          : '/favicon.svg',
+      },
+    ],
+  },
+}
+
+const GOOGLE_SEARCH_SITE = getEnv(import.meta.env, Astro, 'GOOGLE_SEARCH_SITE')
+const searchAction = GOOGLE_SEARCH_SITE ? 'https://www.google.com/search' : '/search/result'
+
+const HEADER_INJECT = getEnv(import.meta.env, Astro, 'HEADER_INJECT')
+const FOOTER_INJECT = getEnv(import.meta.env, Astro, 'FOOTER_INJECT')
+const TAGS = getEnv(import.meta.env, Astro, 'TAGS')
+const LINKS = getEnv(import.meta.env, Astro, 'LINKS')
+const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
+  .split(';')
+  .filter(Boolean)
+  .map((link) => {
+    link = link.split(',')
+    return {
+      title: link[0],
+      href: link[1],
+    }
+  })
+---
+
+<!doctype html>
+<html lang={locale ?? 'en'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="alternate" type="application/rss+xml" title={`${RSS_PREFIX}${channel?.title}`} href={RSS_URL} />
+    <style is:inline>
+      @view-transition {
+        navigation: auto; /* enabled */
+      }
+    </style>
+    <SEO
+      titleTemplate={`%s | ${channel?.title}`}
+      titleDefault={[channel?.title, seoParams.description].filter(Boolean).join(' - ')}
+      twitter={{
+        card: 'summary_large_image',
+        creator: twitter ? `@${twitter}` : undefined,
+      }}
+      {...seoParams}
+    />
+    <Fragment set:html={HEADER_INJECT} />
+  </head>
+
+  <body>
+    <div id="wrapper">
+      <!-- 顶部导航栏 -->
+      <header class="top-nav">
+        <div class="nav-container">
+          <div class="nav-left">
+            <a href={SITE_URL} title={channel?.title} class={`nav-link ${pathname === '/' ? 'current' : ''}`}> 首页 </a>
+            <a href="/posts" title="所有文章" class={`nav-link ${pathname === '/posts' ? 'current' : ''}`}> 文章 </a>
+            <a href="/tags" title="类别" class={`nav-link ${pathname === '/tags' ? 'current' : ''}`}>
+              类别
+            </a>
+            {
+              LINKS ? (
+                <a href={`${SITE_URL}links`} title="友链" class={`nav-link ${pathname === '/links' ? 'current' : ''}`}>
+                  友链
+                </a>
+              ) : null
+            }
+            {
+              navs.map((nav) => (
+                <a href={nav.href} title={nav.title} target="_blank" rel="noopener" class="nav-link">
+                  {nav.title}
+                </a>
+              ))
+            }
+            <!-- Mobile search toggle -->
+            <button class="mobile-search-toggle" aria-label="搜索">
+              <img src="/src/assets/search.svg" alt="搜索" width="18" height="18" />
+            </button>
+          </div>
+
+          <div class="nav-right">
+            <!-- Desktop search form -->
+            <form class="search-form" action={searchAction} method="get">
+              {GOOGLE_SEARCH_SITE ? <input type="hidden" name="as_sitesearch" value={GOOGLE_SEARCH_SITE} /> : null}
+              <input type="text" name="q" placeholder="搜索文章..." class="search-input" />
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <!-- Mobile search overlay -->
+      <div class="mobile-search-overlay">
+        <div class="mobile-search-container">
+          <form class="mobile-search-form" action={searchAction} method="get">
+            {GOOGLE_SEARCH_SITE ? <input type="hidden" name="as_sitesearch" value={GOOGLE_SEARCH_SITE} /> : null}
+            <input type="text" name="q" placeholder="搜索文章..." class="mobile-search-input" />
+            <button type="button" class="mobile-search-close" aria-label="关闭搜索">
+              ✕
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 主要内容区域 -->
+      <main class="main-content">
+        <slot />
+      </main>
+
+      <!-- 底部栏 -->
+      <footer class="bottom-footer">
+        <div class="footer-container">
+          <div class="footer-links">
+            Powered by
+            <a
+              href="https://github.com/ccbikai/BroadcastChannel"
+              title="BroadcastChannel"
+              target="_blank"
+              rel="noopener"
+            >
+              BroadcastChannel
+            </a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <a href="#wrapper" id="back-to-top" aria-label="Back to top">
+      <img {...backToTopIcon} alt="Back to Top" />
+    </a>
+    <Fragment set:html={FOOTER_INJECT} />
+  </body>
+</html>
+
+<style>
+  /* Desktop search input animation */
+  .search-input {
+    width: 180px;
+    transition: width 0.3s ease, border-color 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--foreground-color);
+    width: 220px;
+  }
+
+  /* Mobile search styles */
+  .mobile-search-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    color: var(--secondary-color);
+  }
+
+  .mobile-search-toggle:hover {
+    background-color: var(--code-background-color);
+  }
+
+  .mobile-search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-search-overlay.active {
+    transform: translateY(0);
+  }
+
+  .mobile-search-container {
+    width: 100%;
+  }
+
+  .mobile-search-form {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    position: relative;
+  }
+
+  .mobile-search-input {
+    flex: 1;
+    padding: 12px 40px 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .mobile-search-close {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--secondary-color);
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  /* Responsive styles */
+  @media screen and (max-width: 768px) {
+    .nav-right {
+      display: none;
+    }
+
+    .mobile-search-toggle {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchToggle = document.querySelector('.mobile-search-toggle')
+    const searchOverlay = document.querySelector('.mobile-search-overlay')
+    const searchInput = document.querySelector('.mobile-search-input')
+    const searchClose = document.querySelector('.mobile-search-close')
+
+    const openMobileSearch = () => {
+      searchOverlay.classList.add('active')
+      searchInput.focus()
+    }
+
+    const closeMobileSearch = () => {
+      searchOverlay.classList.remove('active')
+      searchInput.value = ''
+    }
+
+    if (searchToggle) {
+      searchToggle.addEventListener('click', openMobileSearch)
+    }
+
+    if (searchClose) {
+      searchClose.addEventListener('click', closeMobileSearch)
+    }
+
+    // Close search when clicking outside or pressing Escape
+    document.addEventListener('click', (e) => {
+      if (searchOverlay.classList.contains('active')
+        && !searchOverlay.contains(e.target)
+        && !searchToggle.contains(e.target)) {
+        closeMobileSearch()
+      }
+    })
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+        closeMobileSearch()
+      }
+    })
+  })
+</script>

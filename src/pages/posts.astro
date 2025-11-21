@@ -1,0 +1,163 @@
+---
+import Layout from '../layouts/single-column.astro'
+import { getEnv } from '../lib/env'
+import { getChannelInfo } from '../lib/telegram'
+import PostCard from '../components/post-card.astro'
+
+// 深拷贝 channel 对象，避免被其他页面的 SEO 设置污染
+const { SITE_URL } = Astro.locals
+const channel = JSON.parse(JSON.stringify(await getChannelInfo(Astro)))
+const posts = channel.posts ?? []
+const GOOGLE_SEARCH_SITE = getEnv(import.meta.env, Astro, 'GOOGLE_SEARCH_SITE')
+
+// 设置页面 SEO
+channel.seo = {
+  title: '文章',
+  text: `浏览 ${channel?.title} 的所有文章`
+}
+---
+
+<Layout channel={channel}>
+  <!-- 页面标题 -->
+  <section class="page-header fade-in-up">
+    <h1 class="page-title">{channel?.title}</h1>
+    {channel?.descriptionHTML && <div class="page-description" set:html={channel.descriptionHTML} />}
+  </section>
+
+  <!-- 文章列表 -->
+  <section class="posts-list fade-in-up">
+    <div class="posts-container">
+      {posts.map((post, index) => <PostCard post={post} class={`fade-in-up delay-${index % 5}`}/>)}
+    </div>
+
+    <!-- 分页导航 -->
+    <div class="pagination-container fade-in-up">
+      <div class="pagination-info">
+        显示最近 {posts.length} 篇文章
+      </div>
+      <div class="pagination-nav">
+        <a href={`${SITE_URL}before/${posts[posts.length - 1]?.id}`} class="pagination-btn"> 加载更早的文章 → </a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .page-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .page-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--secondary-color);
+  }
+
+  .posts-list {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .posts-container {
+    display: grid;
+    gap: 32px;
+    margin-bottom: 60px;
+  }
+
+  .pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .pagination-info {
+    font-size: 14px;
+    color: var(--secondary-color);
+    text-align: center;
+  }
+
+  .pagination-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: var(--box-border-radius);
+    transition: all var(--animation-normal) var(--ease-out);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pagination-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 30px 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+
+    .posts-list {
+      padding: 0 20px;
+    }
+
+    .post-card {
+      padding: 24px;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .pagination-container {
+      padding: 30px 20px;
+    }
+
+    .pagination-nav {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .pagination-btn {
+      width: 80%;
+      margin: 0 auto;
+      text-align: center;
+    }
+  }
+
+  /* 添加延迟动画类 */
+  .delay-0 { animation-delay: 0.05s; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.15s; }
+  .delay-3 { animation-delay: 0.2s; }
+  .delay-4 { animation-delay: 0.25s; }
+</style>

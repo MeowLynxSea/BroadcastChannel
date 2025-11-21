@@ -2,6 +2,7 @@
 import '../assets/normalize.css'
 import '../assets/style.css'
 import '../assets/global.css'
+import '../assets/animations.css'
 import { SEO } from 'astro-seo'
 import { getEnv } from '../lib/env'
 import backToTopIcon from '../assets/back-to-top.svg'
@@ -72,7 +73,7 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f1ec" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="alternate" type="application/rss+xml" title={`${RSS_PREFIX}${channel?.title}`} href={RSS_URL} />
     <style is:inline>
       @view-transition {
@@ -105,19 +106,20 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
                   Home
                 </a>
               </div>
-              {
-                TAGS ? (
-                  <div class="nav-item">
-                    <a
-                      href={`${SITE_URL}tags`}
-                      title="Tags"
-                      class={`nav-link ${pathname === '/tags' ? 'current' : ''}`}
-                    >
-                      Tags
-                    </a>
-                  </div>
-                ) : null
-              }
+              <div class="nav-item">
+                <a href={`${SITE_URL}search`} title="Search" class={`nav-link ${pathname === '/search' || pathname.startsWith('/search/') ? 'current' : ''}`}>
+                  Search
+                </a>
+              </div>
+              <div class="nav-item">
+                <a
+                  href={`${SITE_URL}tags`}
+                  title="类别"
+                  class={`nav-link ${pathname === '/tags' ? 'current' : ''}`}
+                >
+                  类别
+                </a>
+              </div>
               {
                 LINKS ? (
                   <div class="nav-item">

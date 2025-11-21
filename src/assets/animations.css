@@ -1,0 +1,272 @@
+/* 动画变量 */
+:root {
+  --animation-fast: 0.15s;
+  --animation-normal: 0.25s;
+  --animation-slow: 0.4s;
+  --animation-slowest: 0.6s;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* 页面加载动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* 全局动画类 */
+.fade-in-up {
+  animation: fadeInUp var(--animation-normal) var(--ease-out);
+}
+
+.fade-in {
+  animation: fadeIn var(--animation-normal) var(--ease-out);
+}
+
+.slide-in-left {
+  animation: slideInLeft var(--animation-normal) var(--ease-out);
+}
+
+/* 页面元素进入动画 */
+body > #wrapper {
+  animation: fadeIn var(--animation-slow) var(--ease-out);
+}
+
+/* 侧边栏动画 */
+#aside-container {
+  animation: slideInLeft var(--animation-slow) var(--ease-out);
+}
+
+/* 主内容区域动画 */
+#main-container {
+  animation: fadeInUp var(--animation-slow) var(--ease-out);
+}
+
+/* 删除了header的动画效果 */
+
+/* 文章卡片动画 */
+.post-card {
+  transition: transform var(--animation-normal) var(--ease-out),
+              box-shadow var(--animation-normal) var(--ease-out),
+              border-color var(--animation-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.post-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform var(--animation-slow) ease;
+}
+
+.post-card:hover::before {
+  transform: translateX(100%);
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* 头像呼吸效果 */
+.header-avatar,
+.profile-avatar {
+  animation: breathe 4s infinite ease-in-out;
+  transition: transform var(--animation-normal) var(--ease-out);
+}
+
+.header-avatar:hover,
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* 搜索框增强动画 */
+.search-input,
+.mobile-search-input {
+  transition: all var(--animation-normal) var(--ease-out);
+}
+
+/* 按钮微交互 */
+button, a.btn, .view-more-btn, .read-more, .tag, .link-tag, .attachment-tag {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--animation-fast) var(--ease-out);
+}
+
+button:active, a.btn:active, .view-more-btn:active, .read-more:active,
+.tag:active, .link-tag:active, .attachment-tag:active {
+  transform: scale(0.98);
+}
+
+/* 社交图标动画 */
+.social-icon {
+  transition: transform var(--animation-fast) var(--ease-out),
+              filter var(--animation-fast) var(--ease-out),
+              background-color var(--animation-fast) var(--ease-out);
+}
+
+.social-icon:hover {
+  transform: translateY(-1px) scale(1.05);
+}
+
+/* 图片加载动画 */
+img:not(.profile-avatar) {
+  opacity: 0;
+  animation: fadeIn var(--animation-normal) var(--ease-out) forwards;
+}
+
+/* 返回顶部按钮动画增强 */
+#back-to-top {
+  transition: all var(--animation-normal) var(--ease-out);
+}
+
+#back-to-top:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+#back-to-top:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* 滚动显示动画 */
+@media (prefers-reduced-motion: no-preference) {
+  .post-card:nth-child(1) { animation-delay: 0.1s; }
+  .post-card:nth-child(2) { animation-delay: 0.2s; }
+  .post-card:nth-child(3) { animation-delay: 0.3s; }
+  .post-card:nth-child(4) { animation-delay: 0.4s; }
+  .post-card:nth-child(5) { animation-delay: 0.5s; }
+}
+
+/* 加载状态动画 */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.3) 50%,
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 响应式动画调整 */
+@media (max-width: 768px) {
+  :root {
+    --animation-fast: 0.12s;
+    --animation-normal: 0.2s;
+    --animation-slow: 0.3s;
+  }
+}
+
+/* 减少动画 - 为那些不喜欢动画的用户提供选择 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 为焦点状态添加微妙的动画 */
+:focus-visible {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+  transition: outline-color var(--animation-fast) var(--ease-out);
+}
+
+/* 输入框聚焦时的微妙动画 */
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 标签云悬停效果 */
+.tag-cloud-item {
+  transition: transform var(--animation-fast) var(--ease-out),
+              color var(--animation-fast) var(--ease-out);
+}
+
+.tag-cloud-item:hover {
+  transform: translateX(2px);
+  color: var(--link-color);
+}
+
+/* 链接下划线动画 */
+a {
+  position: relative;
+  text-decoration: none;
+}
+
+a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--link-color);
+  transition: width var(--animation-normal) var(--ease-out);
+}
+
+a:hover::after {
+  width: 100%;
+}

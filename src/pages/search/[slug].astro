@@ -1,0 +1,206 @@
+---
+import Layout from '../../layouts/single-column.astro'
+import { getEnv } from '../../lib/env'
+import { searchPosts } from '../../lib/search'
+import { getChannelInfo } from '../../lib/telegram'
+import PostCard from '../../components/post-card.astro'
+
+// Get the search query from the URL
+const searchQuery = Astro.params.slug || ''
+
+// Set page specific SEO
+const channel = await getChannelInfo(Astro)
+const channelInfo = {
+  ...channel,
+  seo: {
+    title: `搜索：${searchQuery}`,
+    description: `搜索"${searchQuery}"的结果`
+  }
+}
+
+// Search for posts
+const searchResults = await searchPosts(searchQuery, Astro)
+const posts = searchResults.posts || []
+const total = searchResults.total || 0
+const hasError = searchResults.error
+
+// Get recent posts if no results
+const recentPosts = posts.length === 0 ? (channel.posts || []).slice(0, 3) : []
+---
+
+<Layout channel={channelInfo}>
+  <!-- 页面标题 -->
+  <section class="search-results-header">
+    <h1 class="search-title">
+      搜索"{searchQuery}"
+    </h1>
+    <p class="search-count">
+      {hasError
+        ? `搜索出错：${hasError}`
+        : total === 0
+          ? '没有找到相关内容'
+          : `找到 ${total} 个相关内容${total > 10 ? '（显示前10个）' : ''}`
+      }
+    </p>
+  </section>
+
+  <!-- 搜索结果 -->
+  <section class="search-results">
+    {posts.length > 0 ? (
+      <div class="posts-container">
+        {posts.map((post) => (
+          <PostCard post={post} />
+        ))}
+      </div>
+    ) : (
+      !hasError && (
+        <div class="no-results">
+          <p>没有找到包含"<strong>{searchQuery}</strong>"的内容</p>
+          <div class="search-suggestions">
+            <h3>建议：</h3>
+            <ul>
+              <li>检查关键词拼写</li>
+              <li>尝试使用更简短的关键词</li>
+              <li>使用同义词或相关词汇</li>
+              <li>尝试搜索标签名</li>
+            </ul>
+          </div>
+          <a href="/search" class="back-to-search">重新搜索</a>
+        </div>
+      )
+    )}
+  </section>
+
+  <!-- 出错提示 -->
+  {hasError && (
+    <div class="search-error">
+      <p>搜索功能暂时不可用，请稍后重试。</p>
+      <a href="/search" class="back-to-search">重新搜索</a>
+    </div>
+  )}
+
+
+</Layout>
+
+<style>
+  .search-results-header {
+    max-width: 800px;
+    margin: 40px auto 40px auto;
+    padding: 0 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 32px;
+  }
+
+  .search-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--foreground-color);
+  }
+
+  .search-count {
+    font-size: 16px;
+    color: var(--secondary-color);
+    margin: 0;
+  }
+
+  .search-results {
+    max-width: 800px;
+    margin: 0 auto 60px auto;
+    padding: 0 40px;
+  }
+
+  .posts-container {
+    display: grid;
+    gap: 32px;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+
+  .no-results p {
+    font-size: 18px;
+    color: var(--foreground-color);
+    margin-bottom: 32px;
+  }
+
+  .search-suggestions {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 32px auto;
+  }
+
+  .search-suggestions h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--foreground-color);
+  }
+
+  .search-suggestions ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--secondary-color);
+    line-height: 1.6;
+  }
+
+  .search-suggestions li {
+    margin-bottom: 8px;
+  }
+
+  .search-error {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    text-align: center;
+    background-color: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+
+  .search-error p {
+    color: var(--foreground-color);
+    margin-bottom: 24px;
+  }
+
+  .back-to-search {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+  }
+
+  .back-to-search:hover {
+    opacity: 0.8;
+  }
+
+
+
+  @media (max-width: 768px) {
+    .search-results-header,
+    .search-results {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .search-title {
+      font-size: 24px;
+    }
+
+    .no-results {
+      padding: 40px 20px;
+    }
+  }
+</style>

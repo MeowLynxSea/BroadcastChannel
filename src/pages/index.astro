@@ -1,8 +1,188 @@
 ---
-import List from '../components/list.astro'
+import '../assets/normalize.css'
+import '../assets/style.css'
+import '../assets/global.css'
+import Layout from '../layouts/single-column.astro'
+import Header from '../components/header.astro'
+import PostCard from '../components/post-card.astro'
+import { Image } from 'astro:assets'
 import { getChannelInfo } from '../lib/telegram'
 
-const channel = await getChannelInfo(Astro)
+// 深拷贝 channel 对象，避免被其他页面的 SEO 设置污染
+const channel = JSON.parse(JSON.stringify(await getChannelInfo(Astro)))
+const posts = channel.posts ?? []
+const recentPosts = posts.slice(0, 5) // 显示最近5篇文章
+
+// 设置页面 SEO
+channel.seo = {
+  title: '首页',
+  text: channel?.description
+}
 ---
 
-<List channel={channel} after={false} />
+<Layout channel={channel}>
+  <!-- 个人信息卡片 -->
+  <section class="profile-card fade-in-up">
+    <div class="profile-header">
+      <Image
+        src={channel?.avatar || '/void.png'}
+        alt={channel?.title}
+        class="profile-avatar"
+        width={120}
+        height={120}
+        loading="eager"
+      />
+      <div class="profile-info">
+        <h1 class="profile-title">{channel?.title}</h1>
+        {channel?.description && <div class="profile-description" set:html={channel.descriptionHTML} />}
+      </div>
+    </div>
+  </section>
+
+  <!-- 近期文章部分 -->
+  <section class="recent-posts fade-in-up">
+    <h2 class="section-title">最近更新</h2>
+    <div class="posts-grid">
+      {recentPosts.map((post, index) => <PostCard post={post} class={`fade-in-up delay-${index}`}/>)}
+    </div>
+
+    {
+      posts.length > recentPosts.length && (
+        <div class="view-more fade-in-up">
+          <a href="/posts" class="view-more-btn">
+            查看所有文章
+          </a>
+        </div>
+      )
+    }
+  </section>
+</Layout>
+
+<style>
+  .profile-card {
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+  }
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    object-fit: cover;
+  }
+
+  .profile-info {
+    flex: 1;
+  }
+
+  .profile-title {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .profile-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--secondary-color);
+  }
+
+  .recent-posts {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+    position: relative;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    transition: color var(--animation-normal) var(--ease-out);
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background-color: var(--foreground-color);
+    transition: width var(--animation-normal) var(--ease-out);
+  }
+
+  .recent-posts:hover .section-title::after {
+    width: 120px;
+  }
+
+  .posts-grid {
+    display: grid;
+    gap: 32px;
+  }
+
+  .view-more {
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  .view-more-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .view-more-btn:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    .profile-header {
+      flex-direction: column;
+      text-align: center;
+      padding: 0 20px;
+      gap: 20px;
+    }
+
+    .profile-title {
+      font-size: 28px;
+    }
+
+    .recent-posts {
+      padding: 0 20px;
+    }
+
+    .post-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+
+  /* 添加延迟动画类 */
+  .delay-0 { animation-delay: 0.1s; }
+  .delay-1 { animation-delay: 0.2s; }
+  .delay-2 { animation-delay: 0.3s; }
+  .delay-3 { animation-delay: 0.4s; }
+  .delay-4 { animation-delay: 0.5s; }
+</style>

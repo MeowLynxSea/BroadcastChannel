@@ -1,0 +1,167 @@
+---
+import Layout from '../../layouts/single-column.astro'
+import { getEnv } from '../../lib/env'
+import { getChannelInfo } from '../../lib/telegram'
+import PostCard from '../../components/post-card.astro'
+
+const { SITE_URL } = Astro.locals
+const beforeId = Astro.params.id
+const channel = await getChannelInfo(Astro, {
+  before: beforeId,
+})
+
+const posts = channel.posts ?? []
+
+// 设置页面 SEO
+channel.seo = {
+  title: '历史文章',
+  text: `浏览 ${channel?.title} 的历史文章`
+}
+---
+
+<Layout channel={channel}>
+  <!-- 页面标题 -->
+  <section class="page-header">
+    <h1 class="page-title">{channel?.title}</h1>
+    <p class="page-subtitle">加载更早的文章</p>
+  </section>
+
+  <!-- 文章列表 -->
+  <section class="posts-list">
+    <div class="posts-container">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+
+    <!-- 分页导航 -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        显示 {posts.length} 篇更早的文章
+      </div>
+      <div class="pagination-nav">
+        <div class="pagination-back">
+          <a href="/posts" class="pagination-btn">← 返回最新文章</a>
+        </div>
+        {
+          posts.length > 0 && (
+            <div class="pagination-next">
+              <a href={`${SITE_URL}before/${posts[posts.length - 1]?.id}`} class="pagination-btn">
+                加载更早的文章 →
+              </a>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .page-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 16px;
+    color: var(--secondary-color);
+    margin: 0;
+  }
+
+  .posts-list {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .posts-container {
+    display: grid;
+    gap: 32px;
+    margin-bottom: 60px;
+  }
+
+  .pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .pagination-info {
+    font-size: 14px;
+    color: var(--secondary-color);
+    text-align: center;
+  }
+
+  .pagination-nav {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .pagination-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: var(--box-border-radius);
+    transition: opacity 0.2s ease;
+  }
+
+  .pagination-btn:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 30px 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+
+    .posts-list {
+      padding: 0 20px;
+    }
+
+    .post-card {
+      padding: 24px;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .pagination-nav {
+      flex-direction: column;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .pagination-btn {
+      width: 80%;
+      margin: 0 auto;
+      text-align: center;
+    }
+  }
+</style>

@@ -1,0 +1,16 @@
+---
+// 这个页面用于处理 /search/result?q= 格式的URL
+// 重定向到 /search/[q] 路由
+
+const { url } = Astro.request
+const searchParams = new URL(url).searchParams
+const q = searchParams.get('q')
+
+if (q && q.trim() !== '') {
+  // 重定向到 /search/[q] 路由
+  return Astro.redirect(`/search/${encodeURIComponent(q.trim())}`)
+} else {
+  // 如果没有搜索关键词，重定向到搜索入口页面
+  return Astro.redirect('/search')
+}
+---

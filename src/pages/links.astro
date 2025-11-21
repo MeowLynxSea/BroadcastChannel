@@ -1,13 +1,14 @@
 ---
-import Layout from '../layouts/base.astro'
-import Header from '../components/header.astro'
-import { getChannelInfo } from '../lib/telegram'
+import Layout from '../layouts/single-column.astro'
 import { getEnv } from '../lib/env'
+import { getChannelInfo } from '../lib/telegram'
 
-const channel = await getChannelInfo(Astro)
+// 深拷贝 channel 对象，避免被其他页面的 SEO 设置污染
+const channel = JSON.parse(JSON.stringify(await getChannelInfo(Astro)))
 
+// 设置页面特定的 SEO
 channel.seo = {
-  title: 'Links',
+  title: '友链',
 }
 
 const links = (getEnv(import.meta.env, Astro, 'LINKS') || '')
@@ -26,22 +27,135 @@ if (!links.length) {
 }
 ---
 
-<Layout channel={channel} id="main-container">
-  <slot name="header">
-    <Header channel={channel} />
-  </slot>
+<Layout channel={channel}>
+  <!-- 页面标题 -->
+  <section class="page-header fade-in-up">
+    <h1 class="page-title">友链</h1>
+  </section>
 
-  <div class="section-title">Links</div>
-
-  <div class="tag-cloud">
-    {
-      links.map((link) => (
-        <div class="tag-cloud-item">
-          <a href={link.href} class="tag" target="_blank" rel="noopener" title={link.title}>
-            {link.title}
-          </a>
-        </div>
-      ))
-    }
-  </div>
+  <!-- 友链列表 -->
+  <section class="links-list fade-in-up">
+    <div class="links-container">
+      {
+        links.map((link, index) => (
+          <div class="link-card fade-in-up" style={`animation-delay: ${index * 0.1}s`}>
+            <a href={link.href} class="link-content" target="_blank" rel="noopener">
+              <div class="link-title">{link.title}</div>
+              <div class="link-url">{link.href}</div>
+            </a>
+          </div>
+        ))
+      }
+    </div>
+  </section>
 </Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .page-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .links-list {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .links-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+
+  .link-card {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    transition: all var(--animation-normal) var(--ease-out);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .link-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent 40%, rgba(0,0,0,0.03) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform var(--animation-slow) var(--ease-out);
+  }
+
+  .link-card:hover::before {
+    transform: translateX(100%);
+  }
+
+  .link-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--foreground-color);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+
+  .link-content {
+    display: block;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--foreground-color);
+  }
+
+  .link-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .link-url {
+    font-size: 14px;
+    color: var(--secondary-color);
+    word-break: break-all;
+  }
+
+  .link-content:hover .link-title {
+    color: var(--foreground-color);
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 30px 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+
+    .links-list {
+      padding: 0 20px;
+    }
+
+    .links-container {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .link-content {
+      padding: 20px;
+    }
+  }
+</style>

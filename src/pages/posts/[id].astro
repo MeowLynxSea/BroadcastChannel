@@ -1,10 +1,41 @@
 ---
+import Layout from '../../layouts/single-column.astro'
 import { getEnv } from '../../lib/env'
 import voidFile from '../../assets/void.png'
-import List from '../../components/list.astro'
 import { getChannelInfo } from '../../lib/telegram'
+import dayjs from '../../lib/dayjs'
 
 const { SITE_URL } = Astro.locals
+const locale = getEnv(import.meta.env, Astro, 'LOCALE')
+const timezone = getEnv(import.meta.env, Astro, 'TIMEZONE')
+const COMMENTS = getEnv(import.meta.env, Astro, 'COMMENTS')
+
+// 获取来源页面信息，用于面包屑导航和返回链接
+const referer = Astro.request.headers.get('referer')
+let sourcePage = '/'
+let sourceText = '首页'
+let showMiddleBreadcrumb = true // 控制是否显示中间的面包屑层级
+
+if (referer) {
+  const url = new URL(referer)
+  const pathname = url.pathname
+
+  if (pathname === '/posts' || pathname.startsWith('/posts/')) {
+    sourcePage = '/posts'
+    sourceText = '文章'
+  } else if (pathname.startsWith('/before/')) {
+    sourcePage = pathname
+    sourceText = '文章列表'
+  } else if (pathname === '/search/' || pathname.startsWith('/search/')) {
+    sourcePage = '/search'
+    sourceText = '搜索'
+  } else if (pathname === '/' || pathname === '') {
+    // 从首页进入时，不需要显示中间的面包屑层级
+    showMiddleBreadcrumb = false
+  }
+}
+
+locale && dayjs.locale(locale)
 
 const channelInfo = await getChannelInfo(Astro)
 
@@ -13,27 +44,1022 @@ const post = await getChannelInfo(Astro, {
   id: Astro.params.id,
 })
 
+// 提取标题 - 检查第一行是否以@开头
+function extractTitle(content) {
+  // 获取纯文本内容，同时保留换行符以便正确分割
+  let plainText = content
+    .replace(/<br\s*\/?\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  // 按行分割
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查第一行是否以@开头
+  if (lines.length > 0 && lines[0].trim().startsWith('@')) {
+    const firstLine = lines[0].trim();
+    // 返回第一个@后的所有内容（不包括第一个@）
+    return firstLine.substring(1).trim();
+  }
+
+  return null; // 没有标题
+}
+
+// 移除第一行标题（如果存在）
+function removeTitleFromContent(content) {
+  // 检查是否有@开头的标题
+  let plainText = content
+    .replace(/<br\s*\/?\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查第一行是否以@开头
+  if (lines.length > 0 && lines[0].trim().startsWith('@')) {
+    // 需要移除原始HTML中的第一行
+    // 处理几种情况:
+    // 1. <p>@标题</p>
+    // 2. @标题<br/>
+    // 3. @标题\n
+
+    const titlePattern = /(<p[^>]*>)?\s*@\s*[^\n<]*(<\/p>)?(<br\s*\/?\s*>|\n)?/i;
+
+    // 移除包含@开头的标题行及其后的换行符或<br>标签
+    let processedContent = content.replace(titlePattern, '');
+
+    // 如果第一个模式没有匹配，尝试更宽松的模式
+    if (processedContent === content) {
+      // 尝试匹配任何包含@的内容，直到遇到<br>或换行
+      const fallbackPattern = /@[^<\n]*/i;
+      processedContent = content.replace(fallbackPattern, '');
+    }
+
+    // 移除可能留下的空白行
+    processedContent = processedContent.replace(/^(\s*<br\s*\/?\s*>\s*)+/, '');
+
+    return processedContent;
+  }
+
+  return content; // 没有标题，返回原内容
+}
+
+const postTitle = extractTitle(post.content || '') || '无标题';
+
+// 提取标签 - 检查最后一行是否有#开头的标签
+function extractTags(content) {
+  // 获取纯文本内容，同时保留换行符以便正确分割
+  let plainText = content
+    .replace(/<br\s*\/\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  // 按行分割并过滤空行
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查最后一行是否包含#开头的标签
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim();
+    // 使用正则表达式匹配所有#开头的标签
+    const tagMatches = lastLine.match(/#([^\s#]+)/g);
+
+    if (tagMatches && tagMatches.length > 0) {
+      // 移除#符号，只保留标签名
+      return tagMatches.map(tag => tag.substring(1));
+    }
+  }
+
+  return []; // 没有标签
+}
+
+// 移除最后一行标签（如果存在）
+function removeTagsFromContent(content) {
+  // 检查是否有#开头的标签行
+  let plainText = content
+    .replace(/<br\s*\/\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查最后一行是否包含#开头的标签
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim();
+    const tagMatches = lastLine.match(/#([^\s#]+)/g);
+
+    if (tagMatches && tagMatches.length > 0) {
+      // 需要移除原始HTML中的最后一行
+      // 处理几种情况:
+      // 1. <p>#标签1 #标签2</p>
+      // 2. #标签1 #标签2<br/>
+      // 3. #标签1 #标签2\n
+
+      const tagPattern = /(<p[^>]*>)?\s*#([^\s<#]+)(\s*#([^\s<#]+))*(<\/p>)?(<br\s*\/\s*>|\n)?$/i;
+
+      // 移除包含#开头的标签行及其后的换行符或<br>标签
+      let processedContent = content.replace(tagPattern, '');
+
+      // 如果第一个模式没有匹配，尝试更宽松的模式
+      if (processedContent === content) {
+        // 尝试匹配任何包含#的内容，直到遇到<br>或换行
+        const fallbackPattern = /#[^<\n]*$/i;
+        processedContent = content.replace(fallbackPattern, '');
+      }
+
+      // 移除可能留下的空白行
+      processedContent = processedContent.replace(/(\s*<br\s*\/\s*>\s*)+$/, '');
+
+      return processedContent;
+    }
+  }
+
+  return content; // 没有标签，返回原内容
+}
+
+const postTags = extractTags(post.content || '');
+
+// 处理内容 - 移除标题行（如果存在）和标签行（如果存在）
+const contentWithoutTitle = removeTitleFromContent(post.content || '');
+const processedContent = removeTagsFromContent(contentWithoutTitle);
+
+// 处理链接内容，将其转换为带图标、标题和域名的块状样式
+function processLinks(content) {
+  if (!content) return content;
+
+  // 首先提取所有Telegram预览卡片的信息
+  const previewMap = new Map();
+
+  // 匹配所有Telegram预览链接并提取信息
+  content.replace(/<a\s+[^>]*class="[^"]*tgme_widget_message_link_preview[^"]*"[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gis, (match, href, innerContent) => {
+    const titleMatch = innerContent.match(/<div\s+class="link_preview_title"[^>]*>([^<]*)<\/div>/i);
+    const title = titleMatch ? titleMatch[1].trim() : null;
+
+    const descriptionMatch = innerContent.match(/<div\s+class="link_preview_description"[^>]*>([^<]*)<\/div>/i);
+    const description = descriptionMatch ? descriptionMatch[1].trim() : null;
+
+    if (title) {
+      previewMap.set(href, { title, description });
+    }
+    return '';
+  });
+
+  // 处理所有普通链接，移除原有的普通链接，如果存在对应的预览卡片信息
+  let result = content.replace(/<a\s+([^>]*?)>([^<]*?)<\/a>/gi, (match, attrs, text) => {
+    // 跳过特定类别的链接和已处理的链接
+    if (attrs.includes('class="tag"') ||
+        attrs.includes('class="breadcrumb-link"') ||
+        attrs.includes('class="back-button"') ||
+        attrs.includes('link-preview-card') ||
+        attrs.includes('tgme_widget_message_link_preview')) {
+      return match;
+    }
+
+    // 跳过邮件和电话链接
+    if (attrs.includes('mailto:') || attrs.includes('tel:')) {
+      return match;
+    }
+
+    // 提取href属性
+    const hrefMatch = attrs.match(/href="([^"]*)"/i);
+    if (!hrefMatch) return match;
+
+    const href = hrefMatch[1];
+
+    // 跳过锚点、相对链接和搜索链接
+    if (href.startsWith('#') || href.startsWith('/') || href.includes('search/') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+      return match;
+    }
+
+    try {
+      // 使用预览卡片中的标题和描述，如果没有则使用链接文本
+      const previewData = previewMap.get(href);
+      const title = previewData ? previewData.title : text || '';
+      const description = previewData ? previewData.description : href;
+
+      const url = new URL(href);
+      const domain = url.hostname.replace('www.', '');
+
+      // 根据域名生成图标
+      let icon = domain.charAt(0).toUpperCase();
+      const iconMap = {
+        'github.com': '⚡',
+        'youtube.com': '▶',
+        'twitter.com': '🐦',
+        'x.com': '𝕏',
+        'linkedin.com': '💼',
+        'stackoverflow.com': '📚',
+        'medium.com': '📝',
+        'reddit.com': '🤖',
+        'wikipedia.org': '📖',
+        'google.com': '🔍',
+        'apple.com': '🍎',
+        'microsoft.com': '⊞',
+        'amazon.com': '📦',
+        'netflix.com': '🎬',
+        'spotify.com': '🎵',
+        'instagram.com': '📷',
+        'facebook.com': '📘',
+        'telegram.org': '✈️',
+        'discord.com': '💬',
+        'notion.so': '📋',
+        'figma.com': '🎨',
+        'dribbble.com': '🏀',
+        'behance.net': '🎪',
+        'codepen.io': '🖊️',
+        'jsfiddle.net': '🔧',
+        'codesandbox.io': '🏖️',
+        'vercel.com': '▲',
+        'netlify.app': '▲',
+        'music.163.com': '🎵',
+      };
+
+      // 检查域名是否在图标映射中
+      for (const [key, mappedIcon] of Object.entries(iconMap)) {
+        if (domain.includes(key)) {
+          icon = mappedIcon;
+          break;
+        }
+      }
+
+      // 构建新的链接HTML结构
+      const newAttrs = attrs.replace(/style="[^"]*"/gi, '');
+      return `
+        <a href="${href}" ${newAttrs} class="link-preview-wrapper" style="border-bottom: none; padding-bottom: 0;">
+          <div class="link-preview-card">
+            <div class="link-preview-header">
+              <div class="link-preview-icon">${icon}</div>
+              <div class="link-preview-title">${title}</div>
+            </div>
+            <div class="link-preview-domain">${description}</div>
+          </div>
+        </a>
+      `.trim();
+    } catch (e) {
+      // 如果URL解析失败，返回原链接
+      return match;
+    }
+  });
+
+  // 最后移除所有Telegram预览链接
+  result = result.replace(/<a\s+[^>]*class="[^"]*tgme_widget_message_link_preview[^"]*"[^>]*>.*?<\/a>/gis, '');
+
+  return result;
+}
+
 const channel = {
   ...(channelInfo || {}),
   posts: [post],
-  seo: post,
+  seo: {
+    title: postTitle,
+    text: post.content?.replace(/<[^>]*>/g, '').substring(0, 160) || postTitle
+  },
 }
 
 const staticProxy = getEnv(import.meta.env, Astro, 'STATIC_PROXY') ?? '/static/'
+const datetime = dayjs(post.datetime).tz(timezone)
+const timeago = datetime.isBefore(dayjs().subtract(1, 'w')) ? datetime.format('HH:mm · ll · ddd') : datetime.fromNow()
 ---
 
-<List channel={channel} before={false} after={false} isItem={true}>
-  <div slot="header" id="breadcrumb">
-    <img
-      src={channel?.avatar?.startsWith('http') ? staticProxy + channel?.avatar : voidFile.src}
-      alt={channel?.title}
-      loading="eager"
-      class="breadcrumb-avatar"
-    />
-    <div class="breadcrumb-title">
-      <a href={SITE_URL} class="site-title" title={channel?.title}>
-        {channel.title}
-      </a>
+<Layout channel={channel}>
+  <!-- 面包屑导航 -->
+  <nav class="breadcrumb-nav fade-in-up">
+    <a href={SITE_URL} class="breadcrumb-link">首页</a>
+    {showMiddleBreadcrumb && (
+      <>
+        <span class="breadcrumb-separator">/</span>
+        <a href={sourcePage} class="breadcrumb-link">{sourceText}</a>
+      </>
+    )}
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">详情</span>
+  </nav>
+
+  <!-- 文章头部 -->
+  <header class="post-header fade-in-up">
+    <h1 class="post-title">{postTitle}</h1>
+    <div class="post-meta">
+      <time datetime={post.datetime} class="post-date">
+        {datetime.format('YYYY年MM月DD日')}
+      </time>
+      <span class="post-time">{datetime.format('HH:mm')}</span>
+      {
+        postTags && postTags.length > 0 && (
+          <div class="post-tags">
+            {postTags.map((tag) => (
+              <a href={`/search/${tag}`} class="tag">
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
     </div>
+  </header>
+
+  <!-- 文章内容 -->
+  <article class="post-article fade-in-up">
+    <div class="post-content" set:html={processLinks(processedContent)} />
+  </article>
+
+  <!-- 评论区域 -->
+  {
+    COMMENTS && (
+      <section class="comments-section">
+        <h2 class="comments-title">评论</h2>
+        <div class="comments-container">
+          <script
+            is:inline
+            async
+            src="https://telegram.org/js/telegram-widget.js"
+            data-telegram-discussion={`catismchannel/${post.id}`}
+            data-comments-limit="50"
+            data-colorful="1"
+            data-color="000000"
+          />
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 返回按钮 -->
+  <div class="post-footer">
+    <a href={sourcePage} class="back-button">← 返回{sourceText}</a>
   </div>
-</List>
+</Layout>
+
+<style>
+  .breadcrumb-nav {
+    padding: 20px 40px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .breadcrumb-link {
+    color: var(--secondary-color);
+    text-decoration: none;
+    border-bottom: none;
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--foreground-color);
+  }
+
+  .breadcrumb-current {
+    color: var(--foreground-color);
+    font-weight: 500;
+  }
+
+  .post-header {
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 32px;
+  }
+
+  .post-title {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 24px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .post-date,
+  .post-time {
+    font-size: 14px;
+    color: var(--secondary-color);
+    font-weight: 500;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: var(--foreground-color);
+    background-color: var(--code-background-color);
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+  }
+
+  .post-article {
+    max-width: 800px;
+    margin: 0 auto 60px auto;
+    padding: 0 40px;
+  }
+
+  .post-content {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--foreground-color);
+  }
+
+  .post-content :global(h1),
+  .post-content :global(h2),
+  .post-content :global(h3),
+  .post-content :global(h4),
+  .post-content :global(h5),
+  .post-content :global(h6) {
+    margin-top: 32px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .post-content :global(h1) {
+    font-size: 24px;
+  }
+  .post-content :global(h2) {
+    font-size: 20px;
+  }
+  .post-content :global(h3) {
+    font-size: 18px;
+  }
+  .post-content :global(h4) {
+    font-size: 16px;
+  }
+  .post-content :global(h5) {
+    font-size: 15px;
+  }
+  .post-content :global(h6) {
+    font-size: 14px;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 20px;
+  }
+
+  .post-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--box-border-radius);
+    border: 1px solid var(--border-color);
+    margin: 24px 0;
+  }
+
+  .post-content :global(a) {
+    color: var(--foreground-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .post-content :global(a:hover) {
+    border-bottom-color: var(--foreground-color);
+  }
+
+  .post-content :global(blockquote) {
+    margin: 24px 0;
+    padding: 20px;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--code-background-color);
+    font-style: italic;
+    color: var(--secondary-color);
+  }
+
+  .post-content :global(pre) {
+    background-color: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    padding: 20px;
+    overflow-x: auto;
+    margin: 24px 0;
+    font-size: 14px;
+  }
+
+  .post-content :global(code) {
+    background-color: var(--code-background-color);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-size: 0.9em;
+  }
+
+  .post-content :global(ul),
+  .post-content :global(ol) {
+    margin-bottom: 20px;
+    padding-left: 24px;
+  }
+
+  .post-content :global(li) {
+    margin-bottom: 8px;
+  }
+
+  /* Enhanced Media Styles - Black and White Minimalist Design */
+  .post-content :global(img) {
+    transition: all 0.3s ease;
+    filter: grayscale(0%);
+    border: none;
+    box-shadow: none;
+    cursor: default;
+  }
+
+  .post-content :global(img:hover) {
+    filter: grayscale(20%);
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Video Player Styles */
+  .post-content :global(video) {
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+    max-height: 450px;
+    border-radius: var(--media-border-radius);
+    border: none;
+    background: #000;
+    box-shadow: none;
+    transition: all 0.3s ease;
+    cursor: default;
+  }
+
+  .post-content :global(video:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Audio Player Styles */
+  .post-content :global(audio) {
+    width: 100%;
+    height: 54px;
+    border-radius: var(--media-border-radius);
+    border: 1px solid var(--border-color);
+    background-color: var(--code-background-color);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(audio:hover) {
+    background-color: #f0f0f0;
+    border-color: var(--foreground-color);
+  }
+
+  /* Telegram Widget Message Styles */
+  .post-content :global(.tgme_widget_message) {
+    margin: 24px 0;
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+  }
+
+  .post-content :global(.tgme_widget_message_video),
+  .post-content :global(.tgme_widget_message_roundvideo) {
+    aspect-ratio: 1 / 1;
+    max-width: 800px;
+    max-height: 800px;
+    border: none;
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+    background: #000;
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_video:hover),
+  .post-content :global(.tgme_widget_message_roundvideo:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .post-content :global(.tgme_widget_message_voice) {
+    display: block !important;
+    background: var(--code-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    padding: 16px;
+    margin: 16px 0;
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_voice:hover) {
+    background: #f0f0f0;
+    border-color: var(--foreground-color);
+  }
+
+  /* Link Preview Styles */
+  .post-content :global(.tgme_widget_message_link_preview) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin: 16px 0;
+  }
+
+  .post-content :global(.tgme_widget_message_link_preview:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--foreground-color);
+  }
+
+  .post-content :global(.tgme_widget_message_link_preview:has(.link_preview_image)) {
+    border: none;
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+  }
+
+  .post-content :global(.tgme_widget_message_link_preview .link_preview_image) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_link_preview:hover .link_preview_image) {
+    transform: scale(1.02);
+  }
+
+  .post-content :global(.tgme_widget_message_link_preview .link_preview_site_name) {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    backdrop-filter: blur(4px);
+    border-radius: var(--box-border-radius);
+  }
+
+  /* Attachment/File Styles */
+  .post-content :global(.attachment-box) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    padding: 16px;
+    margin: 16px 0;
+    background-color: var(--code-background-color);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.attachment-box:hover) {
+    background-color: #f0f0f0;
+    border-color: var(--foreground-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .post-content :global(.attachment-box a) {
+    color: var(--foreground-color);
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: none;
+    transition: all 0.2s ease;
+  }
+
+  .post-content :global(.attachment-box a:hover) {
+    color: var(--foreground-color);
+    transform: translateX(2px);
+  }
+
+  /* Enhanced Link Styles */
+  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button)) {
+    color: var(--foreground-color);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    position: relative;
+    padding-bottom: 1px;
+  }
+
+  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):hover) {
+    border-bottom-color: var(--foreground-color);
+    color: var(--foreground-color);
+  }
+
+  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):after) {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: var(--foreground-color);
+    transition: width 0.3s ease;
+  }
+
+  .post-content :global(a:not(.tag):not(.breadcrumb-link):not(.back-button):hover:after) {
+    width: 100%;
+  }
+
+  /* Unsupported Video Card Styles */
+  .post-content :global(.unsupported-video-card) {
+    display: block;
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin: 24px 0;
+    text-decoration: none;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .post-content :global(.unsupported-video-card:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-color: var(--foreground-color);
+    transform: translateY(-2px);
+  }
+
+  .post-content :global(.unsupported-video-content) {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--code-background-color);
+  }
+
+  .post-content :global(.video-icon) {
+    width: 48px;
+    height: 48px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+
+  .post-content :global(.video-info) {
+    flex: 1;
+  }
+
+  .post-content :global(.video-label) {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--foreground-color);
+    margin-bottom: 4px;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .post-content :global(.video-duration) {
+    font-size: 14px;
+    color: var(--secondary-color);
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+
+  .post-content :global(.view-in-telegram) {
+    font-size: 12px;
+    color: var(--secondary-color);
+    opacity: 0.8;
+    white-space: nowrap;
+  }
+
+  /* Enhanced Link Preview with Icon, Title and Domain */
+  .post-content :global(.link-preview-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    padding: 16px;
+    margin: 16px 0;
+    background-color: var(--code-background-color);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+  }
+
+  .post-content :global(.link-preview-card:hover) {
+    background-color: #f0f0f0;
+    border-color: var(--foreground-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-content :global(.link-preview-header) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .post-content :global(.link-preview-icon) {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--foreground-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .post-content :global(.link-preview-title) {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--foreground-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .post-content :global(.link-preview-domain) {
+    font-size: 14px;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 0;
+    text-align: left;
+  }
+
+  .post-content :global(.link-preview-domain::before) {
+    content: '🔗';
+    font-size: 12px;
+  }
+
+  /* Location Styles */
+  .post-content :global(.tgme_widget_message_location_wrap) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    overflow: hidden;
+    margin: 16px 0;
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_location_wrap:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--foreground-color);
+  }
+
+  .post-content :global(.tgme_widget_message_location) {
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Sticker Styles */
+  .post-content :global(.tgme_widget_message_sticker) {
+    border-radius: var(--media-border-radius);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_sticker:hover) {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+
+  .post-content :global(.sticker) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    transition: all 0.3s ease;
+  }
+
+  .post-content :global(.sticker:hover) {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Poll Styles */
+  .post-content :global(.tgme_widget_message_poll_options) {
+    border: 1px solid var(--border-color);
+    border-radius: var(--media-border-radius);
+    background-color: var(--code-background-color);
+    overflow: hidden;
+    margin: 16px 0;
+  }
+
+  .post-content :global(.tgme_widget_message_poll_option) {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+  }
+
+  .post-content :global(.tgme_widget_message_poll_option:last-child) {
+    border-bottom: none;
+  }
+
+  .post-content :global(.tgme_widget_message_poll_option:hover) {
+    background-color: #f0f0f0;
+  }
+
+  /* Media Controls Customization */
+  .post-content :global(video::-webkit-media-controls-panel) {
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  .post-content :global(audio::-webkit-media-controls-panel) {
+    background-color: var(--code-background-color);
+  }
+
+  .post-content :global(video::-webkit-media-controls-play-button),
+  .post-content :global(video::-webkit-media-controls-volume-slider) {
+    filter: invert(1);
+  }
+
+  /* Image Gallery Enhancement */
+  .post-content :global(.image-list-container) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+  }
+
+  .post-content :global(.image-list-container img) {
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    cursor: default;
+  }
+
+  .post-content :global(.image-list-container img:hover) {
+    filter: grayscale(20%);
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .comments-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px 60px 40px;
+  }
+
+  .comments-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+  }
+
+  .comments-container {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    padding: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .breadcrumb-nav,
+    .post-header,
+    .post-article,
+    .comments-section {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .post-title {
+      font-size: 28px;
+    }
+
+    .post-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .post-content {
+      font-size: 15px;
+    }
+  }
+
+  .post-footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 60px;
+  }
+
+  .back-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--background-color);
+    color: var(--foreground-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .back-button:hover {
+    border-color: var(--foreground-color);
+    transform: translateY(-1px);
+  }
+</style>

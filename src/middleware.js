@@ -1,3 +1,6 @@
+import { getEnv } from './lib/env.js'
+import { updateSearchIndex } from './lib/search/index.js'
+
 export async function onRequest(context, next) {
   context.locals.SITE_URL = `${import.meta.env.SITE ?? ''}${import.meta.env.BASE_URL}`
   context.locals.RSS_URL = `${context.locals.SITE_URL}rss.xml`
@@ -7,6 +10,14 @@ export async function onRequest(context, next) {
     const tag = context.params.q.replace('#', '')
     context.locals.RSS_URL = `${context.locals.SITE_URL}rss.xml?tag=${tag}`
     context.locals.RSS_PREFIX = `${tag} | `
+  }
+
+  // 在后台更新搜索索引（非阻塞） - 只有在启用本地搜索时
+  if ((context.url.pathname.startsWith('/search') || context.url.pathname.startsWith('/rss.xml'))
+    && getEnv(import.meta.env, context, 'ENABLE_LOCAL_SEARCH') === 'true') {
+    updateSearchIndex(context, false).catch((error) => {
+      console.error('Error updating search index in middleware:', error)
+    })
   }
 
   const response = await next()
@@ -21,4 +32,4 @@ export async function onRequest(context, next) {
     }
   }
   return response
-};
+}

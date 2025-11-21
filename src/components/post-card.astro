@@ -1,0 +1,834 @@
+---
+import { Image } from 'astro:assets';
+
+export interface Props {
+  post: any;
+  showFullContent?: boolean;
+}
+
+const { post, showFullContent = false } = Astro.props;
+
+// 提取标题 - 检查第一行是否以@开头
+function extractTitle(content) {
+  // 获取纯文本内容，同时保留换行符以便正确分割
+  let plainText = content
+    .replace(/<br\s*\/?\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  // 按行分割
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查第一行是否以@开头
+  if (lines.length > 0 && lines[0].trim().startsWith('@')) {
+    const firstLine = lines[0].trim();
+    // 返回第一个@后的所有内容（不包括第一个@）
+    return firstLine.substring(1).trim();
+  }
+
+  return null; // 没有标题
+}
+
+const postTitle = extractTitle(post.content || '');
+
+// 提取标签 - 检查最后一行是否有#开头的标签
+function extractTags(content) {
+  // 获取纯文本内容，同时保留换行符以便正确分割
+  let plainText = content
+    .replace(/<br\s*\/\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  // 按行分割并过滤空行
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查最后一行是否包含#开头的标签
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim();
+    // 使用正则表达式匹配所有#开头的标签
+    const tagMatches = lastLine.match(/#([^\s#]+)/g);
+
+    if (tagMatches && tagMatches.length > 0) {
+      // 移除#符号，只保留标签名
+      return tagMatches.map(tag => tag.substring(1));
+    }
+  }
+
+  return []; // 没有标签
+}
+
+// 移除最后一行标签（如果存在）
+function removeTagsFromContent(content) {
+  // 检查是否有#开头的标签行
+  let plainText = content
+    .replace(/<br\s*\/\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查最后一行是否包含#开头的标签
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim();
+    const tagMatches = lastLine.match(/#([^\s#]+)/g);
+
+    if (tagMatches && tagMatches.length > 0) {
+      // 需要移除原始HTML中的最后一行
+      // 处理几种情况:
+      // 1. <p>#标签1 #标签2</p>
+      // 2. #标签1 #标签2<br/>
+      // 3. #标签1 #标签2\n
+
+      const tagPattern = /(<p[^>]*>)?\s*#([^\s<#]+)(\s*#([^\s<#]+))*(<\/p>)?(<br\s*\/\s*>|\n)?$/i;
+
+      // 移除包含#开头的标签行及其后的换行符或<br>标签
+      let processedContent = content.replace(tagPattern, '');
+
+      // 如果第一个模式没有匹配，尝试更宽松的模式
+      if (processedContent === content) {
+        // 尝试匹配任何包含#的内容，直到遇到<br>或换行
+        const fallbackPattern = /#[^<\n]*$/i;
+        processedContent = content.replace(fallbackPattern, '');
+      }
+
+      // 移除可能留下的空白行
+      processedContent = processedContent.replace(/(\s*<br\s*\/\s*>\s*)+$/, '');
+
+      return processedContent;
+    }
+  }
+
+  return content; // 没有标签，返回原内容
+}
+
+const postTags = extractTags(post.content || '');
+
+// 移除第一行标题（如果存在）
+function removeTitleFromContent(content) {
+  // 检查是否有@开头的标题
+  let plainText = content
+    .replace(/<br\s*\/?\s*>/gi, '\n') // 将<br>标签转换为换行符
+    .replace(/<\/p>/gi, '\n') // 将</p>标签转换为换行符
+    .replace(/<[^>]*>/g, '') // 移除其他HTML标签
+    .replace(/&nbsp;/g, ' '); // 将&nbsp;转换为空格
+
+  const lines = plainText.split('\n').filter(line => line.trim());
+
+  // 检查第一行是否以@开头
+  if (lines.length > 0 && lines[0].trim().startsWith('@')) {
+    // 查找第一个文本节点，如果它以@开头，则移除包含它的HTML元素
+
+    // 尝试匹配各种包含@标题的情况
+    const patterns = [
+      // 情况1: <p>@标题内容</p>
+      /<p[^>]*>\s*@\s*[^<]*<\/p>/gi,
+      // 情况2: <div>@标题内容</div>
+      /<div[^>]*>\s*@\s*[^<]*<\/div>/gi,
+      // 情况3: <span>@标题内容</span>
+      /<span[^>]*>\s*@\s*[^<]*<\/span>/gi,
+      // 情况4: @标题内容<br/>
+      /@\s*[^<\n]*<br\s*\/?\s*>/gi,
+      // 情况5: @标题内容<br>
+      /@\s*[^<\n]*<br>/gi,
+      // 情况6: @标题内容（不匹配其他情况时）
+      /^\s*@\s*[^\n]*/im
+    ];
+
+    let processedContent = content;
+    let matched = false;
+
+    // 尝试每个模式
+    for (const pattern of patterns) {
+      const newContent = processedContent.replace(pattern, '');
+      if (newContent !== processedContent) {
+        processedContent = newContent;
+        matched = true;
+        break;
+      }
+    }
+
+    // 清理可能留下的空白行和<br>标签
+    if (matched) {
+      processedContent = processedContent.replace(/^(\s*(<br\s*\/?\s*>|\n)\s*)+/, '');
+    }
+
+    return processedContent;
+  }
+
+  return content; // 没有标题，返回原内容
+}
+// 提取图片URL
+function extractImageUrls(content: string) {
+  // 查找所有图片标签
+  const imgRegex = /<img\s[^>]*src="([^"]*)"[^>]*>/g;
+  // 查找所有直接有src属性的视频标签
+  const videoSrcRegex = /<video[^>]*src="([^"]*)"[^>]*>/g;
+  // 查找所有包含source标签的视频
+  const videoRegex = /<video[^>]*>(.*?)<\/video>/gs;
+  const sourceRegex = /<source[^>]*src="([^"]*)"[^>]*>/g;
+
+  // 收集所有媒体URL
+  const mediaUrls = new Set();
+
+  // 处理图片
+  const imgMatches = [...content.matchAll(imgRegex)];
+  imgMatches.forEach(match => {
+    mediaUrls.add(match[1]);
+  });
+
+  // 处理直接有src属性的视频
+  const videoSrcMatches = [...content.matchAll(videoSrcRegex)];
+  videoSrcMatches.forEach(match => {
+    mediaUrls.add(match[1]);
+  });
+
+  // 处理包含source标签的视频
+  const videoMatches = [...content.matchAll(videoRegex)];
+  videoMatches.forEach(match => {
+    const videoContent = match[1];
+    const sourceMatches = [...videoContent.matchAll(sourceRegex)];
+    sourceMatches.forEach(sourceMatch => {
+      mediaUrls.add(sourceMatch[1]);
+    });
+  });
+
+  // 将Set转换为数组
+  return Array.from(mediaUrls);
+}
+
+// 检查URL是否为视频
+function isVideoUrl(url: string) {
+  return url.match(/\.(mp4|webm|ogg|avi|mov|wmv|flv|mkv|m4v)(\?.*)?$/i);
+}
+
+// 移除所有媒体标签和图片预览按钮
+function removeMediaContent(content: string) {
+  // 查找所有图片标签
+  const imgRegex = /<img\s[^>]*src="([^"]*)"[^>]*>/g;
+  // 查找所有直接有src属性的视频标签
+  const videoSrcRegex = /<video[^>]*src="([^"]*)"[^>]*>/g;
+  // 查找所有包含source标签的视频
+  const videoRegex = /<video[^>]*>(.*?)<\/video>/gs;
+  // 查找所有图片预览按钮
+  const imagePreviewRegex = /<button[^>]*class="[^"]*image-preview-button[^"]*"[^>]*>[\s\S]*?<\/button>/g;
+  // 查找所有Telegram视频播放器
+  const telegramVideoPlayerRegex = /<a[^>]*class="[^"]*tgme_widget_message_video_player[^"]*"[^>]*>[\s\S]*?<\/a>/g;
+
+  // 移除所有原始图片、视频和图片预览按钮
+  return content
+    .replace(imgRegex, '')  // 移除图片
+    .replace(videoSrcRegex, '') // 移除有src的视频
+    .replace(videoRegex, '') // 移除有source的视频
+    .replace(imagePreviewRegex, '') // 移除图片预览按钮
+    .replace(telegramVideoPlayerRegex, '') // 移除Telegram视频播放器
+    .replace(/<div[^>]*class="[^"]*image-list-container[^"]*"[^>]*>[\s\S]*?<\/div>/g, ''); // 移除图片列表容器
+}
+
+// 截断文本
+function truncateText(content: string, maxLength = 200) {
+  // 移除所有HTML标签获取纯文本
+  const plainText = content.replace(/<[^>]*>/g, '');
+
+  // 如果没有文本内容（只有空格或换行），返回空字符串
+  if (plainText.trim() === '') {
+    return '';
+  }
+
+  // 如果文本内容本身不超过maxLength，返回原内容
+  if (plainText.length <= maxLength) {
+    return content;
+  }
+
+  // 只有在文本真正超过maxLength时才进行截断
+  let truncated = plainText.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.8) {
+    truncated = truncated.substring(0, lastSpace);
+  }
+  truncated += '...';
+
+  // 尝试保留基本的HTML结构
+  // 检查原内容是否有段落标签
+  if (content.includes('<p>')) {
+    // 如果原内容有段落标签，创建一个简单的段落
+    return '<p>' + truncated + '</p>';
+  }
+
+  // 如果没有段落标签，直接返回截断后的文本
+  return truncated;
+}
+
+// 提取链接
+function extractLinks(content: string) {
+  // 匹配普通链接和Telegram链接预览
+  const linkRegex = /<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/g;
+  const previewRegex = /<a[^>]+class="[^"]*tgme_widget_message_link_preview[^"]*"[^>]*href="([^"]*)"[^>]*>[\s\S]*?<\/a>/g;
+  const links = [];
+  let match;
+
+  // 提取普通链接
+  while ((match = linkRegex.exec(content)) !== null) {
+    const url = match[1];
+    const text = match[2];
+
+    // 跳过标签搜索链接（以/search/开头且包含%23的）
+    if (url.startsWith('/search/') && url.includes('%23')) {
+      continue;
+    }
+
+    // 跳过相对搜索链接
+    if (url.startsWith('/search/') && url !== '/search/') {
+      continue;
+    }
+
+    // 提取域名
+    let domain = '';
+    try {
+      const urlObj = new URL(url);
+      domain = urlObj.hostname.replace('www.', '');
+    } catch (e) {
+      // 如果URL解析失败，使用整个URL作为域名
+      domain = url.length > 20 ? url.substring(0, 20) + '...' : url;
+    }
+
+    links.push({
+      url,
+      text: text.length > 30 ? text.substring(0, 30) + '...' : text,
+      domain
+    });
+  }
+
+  // 提取链接预览（避免重复）
+  content.replace(previewRegex, (fullMatch, url) => {
+    // 检查是否已经存在相同URL的链接
+    if (!links.some(link => link.url === url)) {
+      // 提取域名
+      let domain = '';
+      try {
+        const urlObj = new URL(url);
+        domain = urlObj.hostname.replace('www.', '');
+      } catch (e) {
+        domain = url.length > 20 ? url.substring(0, 20) + '...' : url;
+      }
+
+      links.push({
+        url,
+        text: '链接预览',
+        domain
+      });
+    }
+    return '';
+  });
+
+  return links;
+}
+
+// 提取附件（非图片、非视频的链接）
+function extractAttachments(content: string) {
+  // 查找文件扩展名
+  const fileExtensions = /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|tar|gz|txt|log|csv|json|xml|md|mp3|wav|flac|aac|ogg)/i;
+  const linkRegex = /<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/g;
+  const attachments = [];
+  let match;
+
+  while ((match = linkRegex.exec(content)) !== null) {
+    const url = match[1];
+    const text = match[2];
+
+    // 跳过标签搜索链接（以/search/开头且包含%23的）
+    if (url.startsWith('/search/') && url.includes('%23')) {
+      continue;
+    }
+
+    // 跳过相对搜索链接
+    if (url.startsWith('/search/') && url !== '/search/') {
+      continue;
+    }
+
+    // 检查是否是附件（非图片、非视频）
+    if (!url.match(/\.(jpg|jpeg|png|gif|webp|svg|mp4|avi|mov|wmv|flv|webm)/i) && url.match(fileExtensions)) {
+      // 提取文件扩展名
+      const extension = url.match(fileExtensions)?.[1]?.toUpperCase() || 'FILE';
+
+      attachments.push({
+        url,
+        text: text.length > 20 ? text.substring(0, 20) + '...' : text,
+        extension
+      });
+    }
+  }
+
+  return attachments;
+}
+
+// 处理内容 - 移除标题行（如果存在）和标签行（如果存在）
+const contentWithoutTitle = removeTitleFromContent(post.content || '');
+const contentWithoutTags = removeTagsFromContent(contentWithoutTitle);
+
+const contentWithoutLinks = (contentWithoutTags || '')
+  .replace(/<a[^>]*>.*?<\/a>/g, '') // 移除所有链接（包括标签链接）
+  .replace(/<a[^>]*class="[^"]*tgme_widget_message_link_preview[^"]*"[^>]*>.*?<\/a>/gs, '') // 移除Telegram链接预览（跨行）
+  .replace(/<a[^>]*class="[^"]*link_preview[^"]*"[^>]*>.*?<\/a>/gs, ''); // 移除其他链接预览（跨行）
+
+// 提取图片URL
+const mediaUrls = extractImageUrls(contentWithoutLinks);
+const mediaCount = mediaUrls.length;
+
+// 移除媒体内容后的纯文本内容
+const contentWithoutMedia = removeMediaContent(contentWithoutLinks);
+
+// 判断是否有实际文字内容（使用移除媒体后但未截断的内容）
+const hasTextContent = contentWithoutMedia.replace(/<[^>]*>/g, '').trim().length > 0;
+
+const processedContent = showFullContent ? contentWithoutMedia : truncateText(contentWithoutMedia);
+
+const links = extractLinks(contentWithoutTitle || '');
+const attachments = extractAttachments(contentWithoutTitle || '');
+---
+
+<article class="post-card">
+  {/* 标题 - 只有当标题存在时才显示 */}
+  {postTitle && (
+    <h2 class="post-title">{postTitle}</h2>
+  )}
+
+  {/* 第一行：日期 */}
+  <div class="post-header">
+    <time datetime={post.datetime} class="post-date">
+      {new Date(post.datetime).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+    </time>
+  </div>
+
+  {/* 第二行：左侧内容，右侧媒体 */}
+  <div class={`post-body ${mediaCount > 0 && hasTextContent ? 'has-media-and-content' : mediaCount > 0 ? 'has-media-only' : 'has-content-only'}`}>
+    <div class="post-content-wrapper">
+      <div class="post-content" set:html={processedContent} />
+    </div>
+
+    {/* 媒体展示 */}
+    {mediaCount > 0 && (
+      <div class="post-content-media">
+        <div class="media-container">
+          {isVideoUrl(mediaUrls[0]) ? (
+            <video src={mediaUrls[0]} class="media-item"></video>
+          ) : (
+            <Image
+              src={mediaUrls[0]}
+              alt=""
+              width={300}
+              height={200}
+              quality={80}
+              class="media-item"
+            />
+          )}
+          {mediaCount > 1 && (
+            <div class="media-count-indicator">+{mediaCount - 1}</div>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+
+  {/* 第三行：标签 */}
+  <div class="post-tags-section">
+    {(postTags && postTags.length > 0) && (
+      <div class="post-tags">
+        {postTags.map((tag) => (
+          <a href={`/search/${tag}`} class="tag">
+            #{tag}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* 链接和附件 */}
+  {links.length > 0 && (
+    <div class="post-links">
+      {links.map((link, index) => (
+        <a href={link.url} class="link-tag" target="_blank" rel="noopener noreferrer">
+          <span class="link-number">{index + 1}</span>
+          <svg class="link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span class="link-domain">{link.domain}</span>
+        </a>
+      ))}
+    </div>
+  )}
+
+  {attachments.length > 0 && (
+    <div class="post-attachments">
+      {attachments.map((attachment, index) => (
+        <a href={attachment.url} class="attachment-tag" target="_blank" rel="noopener noreferrer">
+          <svg class="attachment-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+          </svg>
+          <span class="attachment-extension">{attachment.extension}</span>
+        </a>
+      ))}
+    </div>
+  )}
+
+  {/* 第四行：阅读全文 */}
+  <div class="post-footer">
+    <a href={`/posts/${post.id}`} class="read-more">
+      阅读全文
+    </a>
+  </div>
+</article>
+
+<style>
+  .post-card {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--box-border-radius);
+    padding: 24px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .post-card:hover {
+    border-color: var(--foreground-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  /* 标题样式 */
+  .post-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 8px 0;
+    color: var(--foreground-color);
+  }
+
+  /* 第一行：日期 */
+  .post-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .post-date {
+    font-size: 14px;
+    color: var(--secondary-color);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* 第二行：左侧内容，右侧媒体 */
+  .post-body {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  /* 纯文字内容：文字占据全部宽度 */
+  .post-body.has-content-only {
+    flex-direction: row;
+  }
+
+  .post-body.has-content-only .post-content-wrapper {
+    width: 100%;
+  }
+
+  /* 纯媒体内容：媒体靠左对齐 */
+  .post-body.has-media-only {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  .post-body.has-media-only .post-content-media {
+    order: -1; /* 确保媒体在左侧 */
+  }
+
+  /* 文字+媒体内容：媒体靠右对齐，文字占据更大宽度 */
+  .post-body.has-media-and-content {
+    flex-direction: row;
+    justify-content: space-between; /* 让元素分散到两端 */
+  }
+
+  .post-body.has-media-and-content .post-content-wrapper {
+    flex: 1; /* 文字占据剩余空间 */
+    min-width: 0;
+    margin-right: 16px; /* 与媒体的间距 */
+  }
+
+  .post-body.has-media-and-content .post-content-media {
+    flex-shrink: 0; /* 防止媒体被压缩 */
+    margin-left: auto; /* 确保媒体完全靠右 */
+  }
+
+  .post-content-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .post-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--foreground-color);
+  }
+
+  /* 媒体展示 */
+  .post-content-media {
+    flex-shrink: 0;
+    width: auto; /* 宽度根据媒体自适应 */
+  }
+
+  .media-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    width: auto; /* 宽度根据媒体自适应 */
+    border-radius: var(--box-border-radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  .media-item {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 160px; /* 媒体最大高度限制 */
+    width: auto;
+    object-fit: cover;
+  }
+
+  .media-container video {
+    background-color: #f0f0f0;
+    pointer-events: none;
+  }
+
+  .media-count-indicator {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    pointer-events: none;
+  }
+
+  /* 第三行：标签 */
+  .post-tags-section {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .post-tags {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tag {
+    font-size: 12px;
+    color: var(--foreground-color);
+    background-color: var(--code-background-color);
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+  }
+
+  /* 第四行：阅读全文 */
+  .post-footer {
+    display: flex;
+    justify-content: flex-end; /* 靠右对齐 */
+    margin-top: 4px;
+  }
+
+  .read-more {
+    color: var(--foreground-color);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .read-more:hover {
+    border-bottom-color: var(--foreground-color);
+  }
+
+  /* 内容样式 */
+  .post-content :global(h1),
+  .post-content :global(h2),
+  .post-content :global(h3),
+  .post-content :global(h4),
+  .post-content :global(h5),
+  .post-content :global(h6) {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .post-content :global(p) {
+    margin-bottom: 12px;
+  }
+
+  .post-content :global(img:not(.card-thumbnail-single)) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--box-border-radius);
+    border: 1px solid var(--border-color);
+    margin: 16px 0;
+  }
+
+  .post-content :global(a) {
+    color: var(--foreground-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: border-color 0.2s ease;
+  }
+
+  .post-content :global(a:hover) {
+    border-bottom-color: var(--foreground-color);
+  }
+
+  /* 隐藏图片预览按钮 */
+  .post-content :global(.image-preview-button) {
+    display: none;
+  }
+
+  /* 链接标签 */
+  .post-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .link-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 4px;
+    font-size: 11px;
+    color: #3b82f6;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .link-tag:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .link-number {
+    font-weight: 600;
+    background-color: #3b82f6;
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  .link-domain {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 附件标签 */
+  .post-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .attachment-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 4px;
+    font-size: 11px;
+    color: #10b981;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .attachment-tag:hover {
+    background-color: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  .attachment-extension {
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .post-card {
+      padding: 16px;
+    }
+
+    /* 移动端所有布局都改为垂直排列 */
+    .post-body,
+    .post-body.has-content-only,
+    .post-body.has-media-only,
+    .post-body.has-media-and-content {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .post-body.has-media-only .post-content-media {
+      order: 0; /* 重置顺序 */
+    }
+
+    .post-body.has-media-and-content .post-content-wrapper {
+      flex: 1; /* 重置flex比例 */
+    }
+
+    .post-body.has-media-and-content .post-content-media {
+      flex: 1; /* 重置flex比例 */
+      margin-left: 0; /* 重置左对齐 */
+    }
+
+    .post-content-media {
+      width: 100%;
+    }
+
+    .post-header {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .link-domain {
+      max-width: 80px;
+    }
+  }
+</style>

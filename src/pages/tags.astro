@@ -1,35 +1,254 @@
 ---
-import Layout from '../layouts/base.astro'
-import Header from '../components/header.astro'
-import { getChannelInfo } from '../lib/telegram'
+import Layout from '../layouts/single-column.astro'
 import { getEnv } from '../lib/env'
+import { getChannelInfo } from '../lib/telegram'
+import PostCard from '../components/post-card.astro'
 
+// Get channel info and posts
 const channel = await getChannelInfo(Astro)
+const posts = channel.posts || []
 
-channel.seo = {
-  title: 'Tags',
+// Extract tags from all posts
+function extractTags(content) {
+  if (!content) return []
+
+  // Get plain text content while preserving line breaks
+  let plainText = content
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+
+  // Split by lines and filter empty lines
+  const lines = plainText.split('\n').filter(line => line.trim())
+
+  // Check if the last line contains tags starting with #
+  if (lines.length > 0) {
+    const lastLine = lines[lines.length - 1].trim()
+    // Use regex to match all tags starting with #
+    const tagMatches = lastLine.match(/#([^\s#]+)/g)
+
+    if (tagMatches && tagMatches.length > 0) {
+      // Remove # symbol, keep only tag name
+      return tagMatches.map(tag => tag.substring(1))
+    }
+  }
+
+  return []
 }
 
-const tags = (getEnv(import.meta.env, Astro, 'TAGS') || '').split(',')
+// Count tag frequencies
+const tagCounts = {}
+posts.forEach(post => {
+  const tags = extractTags(post.content || '')
+  tags.forEach(tag => {
+    tagCounts[tag] = (tagCounts[tag] || 0) + 1
+  })
+})
+
+// Convert to array and sort by frequency
+const sortedTags = Object.entries(tagCounts)
+  .map(([tag, count]) => ({ tag, count }))
+  .sort((a, b) => b.count - a.count)
+
+// Set page specific SEO
+const channelInfo = {
+  ...channel,
+  seo: {
+    title: '类别',
+    description: '所有内容标签及使用频次'
+  }
+}
 ---
 
-<Layout channel={channel} id="main-container">
-  <slot name="header">
-    <Header channel={channel} />
-  </slot>
+<Layout channel={channelInfo}>
+  <!-- 页面标题 -->
+  <section class="page-header fade-in-up">
+    <h1 class="page-title">内容类别</h1>
+    <p class="page-description">共发现 {sortedTags.length} 个标签，点击标签可查看相关内容</p>
+  </section>
 
-  <div class="section-title">Tags</div>
+  <!-- 标签云 -->
+  <section class="tag-cloud-section fade-in-up">
+    {sortedTags.length > 0 ? (
+      <div class="tag-cloud">
+        {sortedTags.map(({ tag, count }, index) => {
+          // Calculate font size based on frequency (reduced range)
+          const maxCount = Math.max(...sortedTags.map(t => t.count))
+          const minCount = Math.min(...sortedTags.map(t => t.count))
+          const fontSize = maxCount === minCount
+            ? 1.3
+            : 0.9 + ((count - minCount) / (maxCount - minCount)) * 0.4
 
-  <div class="tag-cloud">
-    {
-      tags.map((tag: string) => (
-        <div class="tag-cloud-item">
-          <a href={`/search/%23${tag}`} class="tag">
-            {tag}
-          </a>
-          {/* <span class="tag-cloud-item-count">0</span> */}
-        </div>
-      ))
-    }
-  </div>
+          // Calculate opacity based on frequency (1.0 to 0.5)
+          const opacity = maxCount === minCount
+            ? 0.75
+            : 0.5 + ((count - minCount) / (maxCount - minCount)) * 0.5
+
+          return (
+            <a
+              href={`/search/${tag}`}
+              class="tag-cloud-item fade-in-up"
+              style={`font-size: ${fontSize}rem; opacity: ${opacity}; animation-delay: ${index * 0.05}s`}
+              title={`${count} 篇内容`}
+            >
+              #{tag}
+              <span class="tag-count">({count})</span>
+            </a>
+          )
+        })}
+      </div>
+    ) : (
+      <div class="no-tags">
+        <p>暂无标签</p>
+        <a href="/" class="back-home">返回首页</a>
+      </div>
+    )}
+  </section>
+
+
 </Layout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .page-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .page-description {
+    font-size: 16px;
+    color: var(--secondary-color);
+    margin: 0;
+  }
+
+  .tag-cloud-section {
+    max-width: 800px;
+    margin: 0 auto 60px auto;
+    padding: 0 40px;
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0;
+  }
+
+  .tag-cloud-item {
+    display: inline-flex;
+    align-items: center;
+    color: var(--foreground-color);
+    padding: 8px 16px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all var(--animation-normal) var(--ease-out);
+    border: none;
+    background: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tag-cloud-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--code-background-color);
+    border-radius: 30px;
+    transform: scale(0);
+    transition: transform var(--animation-normal) var(--ease-out);
+    z-index: -1;
+  }
+
+  .tag-cloud-item:hover {
+    color: var(--foreground-color);
+    transform: translateY(-2px);
+  }
+
+  .tag-cloud-item:hover::before {
+    transform: scale(1);
+  }
+
+  .tag-count {
+    font-size: 0.75em;
+    margin-left: 4px;
+    font-weight: 400;
+    opacity: 0.6;
+  }
+
+  .no-tags {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .no-tags p {
+    font-size: 18px;
+    color: var(--secondary-color);
+    margin-bottom: 24px;
+  }
+
+  .back-home {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--foreground-color);
+    color: var(--background-color);
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .back-home:hover {
+    opacity: 0.8;
+  }
+
+
+
+  @media (max-width: 768px) {
+    .page-header {
+      padding: 30px 20px;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+
+    .tag-cloud-section {
+      padding: 0 20px;
+    }
+
+
+
+    .tag-cloud {
+      gap: 12px;
+      padding: 30px 0;
+    }
+
+    .tag-cloud-item {
+      padding: 6px 12px;
+      font-size: 0.9rem !important;
+    }
+  }
+
+  /* 添加延迟动画类 */
+  .delay-0 { animation-delay: 0.1s; }
+  .delay-1 { animation-delay: 0.2s; }
+  .delay-2 { animation-delay: 0.3s; }
+</style>
