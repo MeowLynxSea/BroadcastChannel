@@ -1,0 +1,783 @@
+/* ----------------------------------------------------------------
+VOLT UI CORE VARIABLES & RESET
+----------------------------------------------------------------
+*/
+:root {
+  /* VOLT UI Colors - 复古未来主义色彩方案 */
+  --c-bg: #FFF8F0;
+  --c-text: #1a1a1a;
+  --c-primary: #6366F1; /* Indigo */
+  --c-secondary: #EC4899; /* Pink */
+  --c-accent: #F59E0B; /* Amber */
+  --c-success: #10B981;
+  --c-danger: #EF4444;
+  --c-dark: #000000;
+
+  /* VOLT UI Design Tokens */
+  --border-w: 3px;
+  --shadow-offset: 4px;
+  --radius: 8px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* VOLT UI Animations */
+  --animation-fast: 0.1s;
+  --animation-normal: 0.2s;
+  --animation-slow: 0.6s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;600&display=swap');
+
+/* Body with VOLT UI background and font */
+body {
+  background-color: var(--c-bg);
+  background-image: radial-gradient(var(--c-primary) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--c-text);
+  font-family: var(--font-body);
+}
+
+/* Headings with VOLT UI font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------
+VOLT UI ANIMATIONS (NO JS)
+---------------------------------------------------------------- */
+
+/* 1. Hover Bounce (Spring) */
+@keyframes voltBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* 2. Hard Glitch */
+@keyframes voltGlitch {
+  0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 1px); }
+  20% { clip-path: inset(80% 0 10% 0); transform: translate(2px, -1px); }
+  40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+  60% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -2px); }
+  80% { clip-path: inset(30% 0 20% 0); transform: translate(-1px, 1px); }
+  100% { clip-path: inset(10% 0 80% 0); transform: translate(0); }
+}
+
+/* 3. Pulse Ring */
+@keyframes voltPulse {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+/* 4. Slide Up Fade */
+@keyframes voltSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 5. Shake (Error) */
+@keyframes voltShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Utility Classes for Animations */
+.anim-bounce:hover { animation: voltBounce 0.4s ease; }
+.anim-pulse:hover { animation: voltPulse 1.5s infinite; }
+.anim-entrance { animation: voltSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ----------------------------------------------------------------
+VOLT UI COMPONENTS
+---------------------------------------------------------------- */
+
+/* --- 1. VOLT UI Buttons --- */
+.volt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  background-color: white;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all 0.1s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--c-dark);
+}
+
+.volt-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+}
+
+.volt-btn:active {
+  transform: translate(var(--shadow-offset), var(--shadow-offset));
+  box-shadow: 0px 0px 0px var(--c-dark);
+}
+
+.volt-btn-primary { background-color: var(--c-primary); color: white; }
+.volt-btn-secondary { background-color: var(--c-secondary); color: white; }
+.volt-btn-accent { background-color: var(--c-accent); color: var(--c-dark); }
+.volt-btn-ghost { background-color: transparent; box-shadow: none; border-style: dashed; }
+.volt-btn-ghost:hover { background-color: rgba(0,0,0,0.05); box-shadow: none; transform: none; }
+
+/* --- 2. VOLT UI Inputs --- */
+.volt-input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.volt-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  outline: none;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.volt-input:focus {
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-secondary);
+}
+
+.volt-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-display);
+}
+
+/* VOLT UI Toggle Switch (Checkbox Hack) */
+.volt-toggle {
+  appearance: none;
+  width: 3.5rem;
+  height: 1.75rem;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: 999px;
+  background: white;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+}
+.volt-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.75rem - 10px);
+  height: calc(1.75rem - 10px);
+  background: var(--c-dark);
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+.volt-toggle:checked {
+  background: var(--c-success);
+}
+.volt-toggle:checked::after {
+  transform: translateX(1.75rem);
+  background: white;
+}
+
+/* --- 3. VOLT UI Cards --- */
+.volt-card {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.volt-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--c-accent);
+  border: 2px solid var(--c-dark);
+  font-weight: bold;
+  font-size: 0.75rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+/* --- 4. VOLT UI Sidebar Layout --- */
+.volt-sidebar {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+}
+
+.volt-sidebar-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--c-text);
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.volt-sidebar-link:hover {
+  border-left-color: var(--c-primary);
+  background: rgba(255,255,255,0.5);
+  padding-left: 1.5rem;
+}
+
+/* --- 5. VOLT UI Code Block Styling --- */
+.volt-code-block {
+  background: #1e293b;
+  color: #a5b4fc;
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow-x: auto;
+  font-family: monospace;
+  border: var(--border-w) solid var(--c-dark);
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.volt-token-tag { color: #ec4899; }
+.volt-token-attr { color: #fcd34d; }
+.volt-token-val { color: #6ee7b7; }
+
+/* ----------------------------------------------------------------
+APPLY VOLT UI TO EXISTING COMPONENTS
+---------------------------------------------------------------- */
+
+/* Update existing variables to match VOLT UI */
+:root {
+  /* Keep existing variable names but update values */
+  --background-color: var(--c-bg);
+  --foreground-color: var(--c-text);
+  --highlight-color: var(--c-dark);
+  --box-border-radius: var(--radius);
+  --media-border-radius: var(--radius);
+  --border-color: var(--c-dark);
+  --code-background-color: rgba(255, 255, 255, 0.7);
+  --secondary-color: #666666;
+  --link-color: var(--c-primary);
+  --icon-hover-filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+  --icon-secondary-filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(50%) contrast(100%);
+}
+
+/* Apply VOLT UI card styling to post cards */
+.post-card {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.post-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background-color: var(--c-primary);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform var(--animation-normal) ease;
+}
+
+.post-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+}
+
+.post-card:hover::before {
+  transform: scaleY(1);
+}
+
+/* Apply VOLT UI button styling to navigation links */
+.nav-link {
+  font-weight: 600;
+  font-family: var(--font-display);
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  transition: all var(--animation-fast) ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: white;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  text-decoration: none;
+  color: var(--c-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background-color: var(--c-primary);
+  transition: left var(--animation-normal) ease;
+  z-index: -1;
+}
+
+.nav-link:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+  color: white;
+}
+
+.nav-link:hover::before {
+  left: 0;
+}
+
+.nav-link.current {
+  background-color: var(--c-primary);
+  color: white;
+  border-color: var(--c-dark);
+}
+
+.nav-link.current::before {
+  display: none;
+}
+
+/* Apply VOLT UI styling to search inputs */
+.search-input, .mobile-search-input {
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  outline: none;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.search-input:focus, .mobile-search-input:focus {
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-secondary);
+}
+
+/* Apply VOLT UI styling to tags */
+.tag {
+  background-color: var(--c-accent);
+  border: 2px solid var(--c-dark);
+  font-weight: bold;
+  font-size: 0.75rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+  color: var(--c-dark);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--c-secondary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--animation-normal) ease;
+  z-index: -1;
+}
+
+.tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px calc(var(--shadow-offset) + 1px) 0px var(--c-dark);
+}
+
+.tag:hover::before {
+  transform: scaleX(1);
+}
+
+/* Apply VOLT UI styling to top navigation */
+.top-nav {
+  background: white;
+  border-bottom: var(--border-w) solid var(--c-dark);
+  box-shadow: 0 var(--shadow-offset) 0px var(--c-dark);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* VOLT UI Navigation Container */
+.nav-container {
+  position: relative;
+}
+
+.nav-container::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background-color: var(--c-accent);
+  transition: width var(--animation-normal) ease;
+}
+
+.nav-container:hover::after {
+  width: 100%;
+}
+
+/* Apply VOLT UI styling to footer */
+.bottom-footer {
+  background: white;
+  border-top: var(--border-w) solid var(--c-dark);
+}
+
+/* Apply VOLT UI styling to sidebar navigation */
+#aside-container {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  box-shadow: var(--shadow-offset) 0px 0px var(--c-dark);
+  transition: all var(--animation-normal) ease;
+}
+
+#aside-container:hover {
+  box-shadow: calc(var(--shadow-offset) + 2px) 0px 0px var(--c-dark);
+}
+
+/* VOLT UI Navigation Items */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: -100%;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background-color: var(--c-primary);
+  transition: left var(--animation-normal) ease;
+}
+
+.nav-item:hover::before {
+  left: 0;
+}
+
+/* Apply VOLT UI styling to buttons */
+.read-more, .page {
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  background-color: white;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+  color: var(--c-dark);
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.read-more::before, .page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background-color: var(--c-primary);
+  transition: left var(--animation-normal) ease;
+  z-index: -1;
+}
+
+.read-more:hover, .page:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+  color: white;
+}
+
+.read-more:hover::before, .page:hover::before {
+  left: 0;
+}
+
+/* Apply VOLT UI styling to link tags and attachment tags */
+.link-tag, .attachment-tag {
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: white;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+}
+
+.link-tag:hover, .attachment-tag:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--shadow-offset) + 1px) calc(var(--shadow-offset) + 1px) 0px var(--c-dark);
+}
+
+/* Apply VOLT UI styling to media containers */
+.media-container {
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-normal) ease;
+}
+
+.media-container:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: calc(var(--shadow-offset) + 1px) calc(var(--shadow-offset) + 1px) 0px var(--c-dark);
+}
+
+/* VOLT UI Media Item Hover Effect */
+.media-item {
+  transition: all var(--animation-normal) ease;
+}
+
+.media-container:hover .media-item {
+  transform: scale(1.05);
+  filter: brightness(0.9);
+}
+
+/* Apply VOLT UI styling to content elements */
+.content pre {
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  background-color: var(--c-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.content pre::before {
+  content: 'CODE';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--c-secondary);
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+}
+
+.content table th, .content table td {
+  border: var(--border-w) solid var(--c-dark);
+}
+
+.content table {
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+}
+
+/* Apply VOLT UI styling to back to top button */
+#back-to-top {
+  background: var(--c-accent);
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  opacity: 0.7;
+}
+
+#back-to-top:hover {
+  transform: translate(-2px, -2px) scale(1.1);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+  opacity: 1;
+}
+
+/* VOLT UI Arrow Animation */
+#back-to-top img {
+  transition: transform var(--animation-normal) ease;
+}
+
+#back-to-top:hover img {
+  transform: translateY(-2px);
+}
+
+/* Site intro with VOLT UI styling */
+#site-intro {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-normal) ease;
+}
+
+#site-intro:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+}
+
+/* ----------------------------------------------------------------
+VOLT UI ENHANCED COMPONENTS
+---------------------------------------------------------------- */
+
+/* Enhanced layout styling */
+#wrapper {
+  min-height: 100vh;
+  background-color: var(--c-bg);
+  background-image: radial-gradient(var(--c-primary) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--c-text);
+  font-family: var(--font-body);
+}
+
+/* VOLT UI Page Headers */
+.page-header {
+  background: white;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  margin: 20px auto;
+  max-width: 800px;
+  padding: 40px;
+  text-align: center;
+  transition: all var(--animation-normal) ease;
+}
+
+.page-header:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+}
+
+/* VOLT UI Search Input Enhancements */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 16px 20px;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  outline: none;
+  background: white;
+  transition: all var(--animation-normal) ease;
+}
+
+.search-input:focus {
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-secondary);
+}
+
+/* VOLT UI Tag Cloud Enhancements */
+.tag-cloud-item {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-dark);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: var(--border-w) solid var(--c-dark);
+  background-color: white;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--c-dark);
+  transition: all var(--animation-fast) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tag-cloud-item:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--c-dark);
+  background-color: var(--c-accent);
+}
+
+/* VOLT UI Fade In Animation */
+@keyframes voltFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: voltFadeIn 0.6s var(--ease-out) forwards;
+}
+
+/* VOLT UI Loading Animation */
+.volt-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: var(--border-w) solid var(--c-dark);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* VOLT UI Tooltip Enhancement */
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px) scale(0.8);
+  padding: 8px 12px;
+  background: var(--c-dark);
+  color: white;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--animation-normal) ease;
+  border: var(--border-w) solid var(--c-primary);
+  z-index: 10;
+}
+
+[data-tooltip]:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-5px) scale(1);
+}
