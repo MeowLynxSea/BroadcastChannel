@@ -33,12 +33,10 @@ FROM base AS runtime
 RUN apk add --no-cache sqlite
 
 COPY --from=build /app/dist ./dist
-COPY .env.example .env
 
 ENV HOST=0.0.0.0
 ENV PORT=4321
 
 EXPOSE 4321
 
-# 加载环境变量并启动应用
-CMD sh -c "source .env && node ./dist/server/entry.mjs"
+CMD node ./dist/server/entry.mjs
