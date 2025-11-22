@@ -1,6 +1,6 @@
-# BroadcastChannel
+# BroadcastChannel 🌟
 
-**Turn your Telegram Channel into a MicroBlog.**
+**Turn your Telegram Channel into a Super Awesome MicroBlog! 🎉**
 
 ---
 
@@ -8,78 +8,61 @@ English | [简体中文](./README.zh-cn.md)
 
 ## ✨ Features
 
-- **Turn your Telegram Channel into a MicroBlog**
-- **SEO friendly** `/sitemap.xml`
-- **0 JS on the browser side**
-- **RSS and RSS JSON** `/rss.xml` `/rss.json`
-
-## 🪧 Demo
-
-### Real users
-
-- [面条实验室](https://memo.miantiao.me/)
-- [Find Blog👁发现博客](https://broadcastchannel.pages.dev/)
-- [Memos 广场 🎪](https://now.memobbs.app/)
-- [APPDO 数字生活指南](https://mini.appdo.xyz/)
-- [85.60×53.98卡粉订阅/提醒](https://tg.docofcard.com/)
-- [新闻在花频道](https://tg.istore.app/)
-- [ALL About RSS](https://blog.rss.tips/)
-- [Charles Chin's Whisper](https://memo.eallion.com/)
-- [PlayStation 新闻转发](https://playstationnews.pages.dev)
-- [Yu's Life](https://daily.pseudoyu.com/)
-- [Leslie 和朋友们](https://tg.imlg.co/)
-- [OKHK 分享](https://tg.okhk.net/)
-- [gledos 的微型博客](https://microblogging.gledos.science)
-- [Steve Studio](https://tgc.surgeee.me/)
-- [LiFePO4:沙雕吐槽](https://lifepo4.top)
-- [Hotspot Hourly](https://hourly.top/)
-- [大河马中文财经新闻分享](https://a.xiaomi318.com/)
-- [\_My. Tricks 🎩 Collection](https://channel.mykeyvans.com)
-- [小报童专栏精选](https://xiaobaotong.genaiprism.site/)
-- [Fake news](https://fake-news.csgo.ovh/)
-- [miyi23's Geekhub资源分享](https://gh.miyi23.top/)
-- [Magazine｜期刊杂志｜财新周刊](https://themagazine.top)
-- [Remote Jobs & Cooperation](https://share-remote-jobs.vercel.app/)
-- [甬哥侃侃侃--频道发布](https://ygkkktg.pages.dev)
-- [Fugoou.log](https://fugoou.xyz)
-- [Bboysoul的博客](https://tg.bboy.app/)
-- [MakerHunter](https://share.makerhunter.com/)
-- [ChatGPT/AI新闻聚合](https://g4f.icu/)
-- [Abner's memos](https://memos.abnerz6.top/)
-- [Appinn Talk](https://talk.appinn.net/)
-- [小报童优惠与排行榜](https://youhui.xiaobaoto.com/)
-
-### Platform
-
-1. [Cloudflare](https://broadcast-channel.pages.dev/)
-2. [Netlify](https://broadcast-channel.netlify.app/)
-3. [Vercel](https://broadcast-channel.vercel.app/)
-
-BroadcastChannel supports deployment on serverless platforms like Cloudflare, Netlify, Vercel that support Node.js SSR, or on a VPS.
-For detailed tutorials, see [Deploy your Astro site](https://docs.astro.build/en/guides/deploy/).
+- **🚀 Turn your Telegram Channel into a MicroBlog**
+- **🔍 Powerful Search System** - Find anything with our fuzzy search magic!
+- **💬 Complete Comment System** - Chat with your readers! Support for both SQLite & File storage!
+- **🎨 NEO-BRUTALISM Design** - Super cool, bold, and beautiful UI that stands out!
+- **📱 SEO friendly** `/sitemap.xml`
+- **⚡ 0 JS on the browser side**
+- **📡 RSS and RSS JSON** `/rss.xml` `/rss.json`
 
 ## 🧱 Tech Stack
 
-- Framework: [Astro](https://astro.build/)
-- CMS: [Telegram Channels](https://telegram.org/tour/channels)
-- Template: [Sepia](https://github.com/Planetable/SiteTemplateSepia)
+- Framework: [Astro](https://astro.build/) ⚡
+- CMS: [Telegram Channels](https://telegram.org/tour/channels) 📱
+- Search: [Fuse.js](https://fusejs.io/) 🔍
+- Comments: SQLite & File Storage 💾
+- Style: NEO-BRUTALISM Design System 🎨
+- Original Template: [Sepia](https://github.com/Planetable/SiteTemplateSepia) (but we totally transformed it! 🪄)
 
-## 🏗️ Deployment
+## 🎉 What's New?
 
-### Docker
+This version has been totally revamped with amazing new features! Here's what makes it special:
 
-1. `docker pull ghcr.io/ccbikai/broadcastchannel:main`
-2. `docker run -d --name broadcastchannel -p 4321:4321 -e CHANNEL=miantiao_me ghcr.io/ccbikai/broadcastchannel:main`
+### ✨ Amazing New Features Added
+- **💬 Full Comment System**: Let your readers chat! Includes user info collection, nested replies, and both SQLite/file storage options!
+- **🔍 Advanced Search**: Powered by Fuse.js fuzzy search with caching, search statistics, and auto-indexing!
+- **🎨 NEO-BRUTALISM UI**: Complete design overhaul with bold borders, sharp corners, and awesome shadows!
+- **📱 Better Mobile Experience**: Responsive design that looks great on all devices!
+- **🔧 Developer Tools**: Added health checks, search management scripts, and proxy development mode!
 
-### Serverless
+### 🪄 Design Transformation
+Gone is the soft, traditional look! We've embraced the awesome NEO-BRUTALISM style:
+- **Sharp corners only** - No more boring rounded corners!
+- **Bold black borders** - Because edges should be seen!
+- **Cool hard shadows** - Everything pops off the page!
+- **Monospace fonts** - Techy and beautiful!
+- **Grid backgrounds** - Subtle but cool patterns!
 
-1. [Fork](https://github.com/ccbikai/BroadcastChannel/fork) this project to your GitHub
-2. Create a project on Cloudflare/Netlify/Vercel
-3. Select the `BroadcastChannel` project and the `Astro` framework
-4. Configure the environment variable `CHANNEL` with your channel name. This is the minimal configuration, for more configurations see the options below
-5. Save and deploy
-6. Bind a domain (optional).
-7. Update code, refer to the official GitHub documentation [Syncing a fork branch from the web UI](https://docs.github.com/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork#syncing-a-fork-branch-from-the-web-ui).
+### 🚀 Performance Improvements
+- **Smarter caching** - Everything loads faster!
+- **Optimized components** - Cleaner, faster, better!
+- **Search indexing** - Content is instantly searchable!
+
+### 🔧 Technical Enhancements
+- **Comment System Architecture**: Modular design with adapters for SQLite and file storage
+- **Search Infrastructure**: LRU caching, rate limiting, and automated index management
+- **Component Optimization**: Split monolithic components into reusable, focused pieces
+- **Font Loading System**: Dynamic font optimization with fallback strategies
+- **API Endpoints**: New RESTful APIs for comments, search status, and avatar handling
+
+### 🛠️ Development Tools Added
+- **Health Check Script**: Monitor system status and performance metrics
+- **Search Management Scripts**: Initialize, update, and clean search indexes
+- **Proxy Development Mode**: Easy development with Telegram API proxy
+- **Enhanced ESLint Configuration**: Better code quality and consistency
+
+Enjoy this totally transformed experience! 🌈✨
 
 ## ⚒️ Configuration
 
@@ -140,15 +123,34 @@ RSS_BEAUTIFY=true
 
 ## 🙋🏻 FAQs
 
-1. Why is the content empty after deployment?
+1. Why is the content empty after deployment? 😱
    - Check if the channel is public, it must be public
    - The channel username is a string, not a number
    - Turn off the "Restricting Saving Content" setting in the channel
    - Redeploy after modifying environment variables
    - Telegram blocks public display of some sensitive channels, you can verify by visiting `https://t.me/s/channelusername`.
 
-## ☕ Sponsor
+2. How do I enable comments? 💬
+   - Just set `COMMENTS=true` in your environment variables! Easy peasy!
 
-1. [Follow me on Telegram](https://t.me/miantiao_me)
-2. [Follow me on 𝕏](https://404.li/kai)
-3. [Sponsor me on GitHub](https://github.com/sponsors/ccbikai)
+3. How does the search work? 🔍
+   - Our magic fuzzy search finds anything! Run `pnpm init-search` after deployment to build the index!
+
+4. What's NEO-BRUTALISM? 🎨
+   - It's our super cool design system with bold borders, no rounded corners, and awesome shadows! It makes your blog stand out! ✨
+
+## ☕ Sponsor Original Creator
+
+1. [Follow me on Telegram](https://t.me/miantiao_me) 📱
+2. [Follow me on 𝕏](https://404.li/kai) 🐦
+3. [Sponsor me on GitHub](https://github.com/sponsors/ccbikai) ❤️
+
+---
+
+## 🌟 Fork Author & Sponsor
+
+**Forked with love by [MeowLynxSea](https://github.com/MeowLynxSea)** 💖
+
+Enjoy this enhanced version? Consider supporting my work! 🎁
+
+📱 [Sponsor me on 爱发电](https://ifdian.net/@meowdream) - Buy me a bubble tea! 🧋
