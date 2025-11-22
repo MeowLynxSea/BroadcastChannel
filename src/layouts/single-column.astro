@@ -7,6 +7,7 @@ import { SEO } from 'astro-seo'
 import { getEnv } from '../lib/env'
 import backToTopIcon from '../assets/back-to-top.svg'
 import searchIcon from '../assets/search.svg'
+import { setupFontFallback } from '../lib/font-loader'
 
 const { SITE_URL, RSS_URL, RSS_PREFIX } = Astro.locals
 const { channel } = Astro.props
@@ -158,7 +159,7 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
           <div class="footer-links">
             Powered by
             <a
-              href="https://github.com/ccbikai/BroadcastChannel"
+              href="https://github.com/MeowLynxSea/BroadcastChannel"
               title="BroadcastChannel"
               target="_blank"
               rel="noopener"
@@ -175,6 +176,16 @@ const navs = (getEnv(import.meta.env, Astro, 'NAVS') || '')
     </a>
     <Fragment set:html={FOOTER_INJECT} />
   </body>
+  <script>
+    // 异步加载字体回退策略
+    (async () => {
+      try {
+        await setupFontFallback();
+      } catch (error) {
+        console.warn('Font loading failed, using system fonts:', error);
+      }
+    })();
+  </script>
 </html>
 
 <style>

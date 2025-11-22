@@ -17,17 +17,9 @@ interface CommentProps {
 
 const { comment, isReply = false } = Astro.props
 
-// Get user avatar URL using Gravatar with fallback
+// Get user avatar URL using our server proxy
 function getUserAvatar(email: string, size = 48): string {
-  // Simple hash for consistent avatars
-  let hash = 0
-  for (let i = 0; i < email.length; i++) {
-    const char = email.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32-bit integer
-  }
-  const absHash = Math.abs(hash).toString(16).padEnd(32, '0')
-  return `https://www.gravatar.com/avatar/${absHash}?d=mp&s=${size}&r=g`
+  return `/api/avatar?email=${encodeURIComponent(email)}&size=${size}`
 }
 
 // Format comment date

@@ -25,7 +25,7 @@ const preflightAction = `/api/comments/${postId}/preflight`
 
       <div class="user-info">
         <img
-          src={`https://www.gravatar.com/avatar/${userInfo.userEmail.toLowerCase() || 'default'}?d=mp&s=40`}
+          src={`/api/avatar?email=${encodeURIComponent(userInfo.userEmail.toLowerCase() || 'default')}&size=40`}
           alt={userInfo.userName}
           class="user-avatar"
           width="40"

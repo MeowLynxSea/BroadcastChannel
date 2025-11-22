@@ -62,9 +62,6 @@ const userInfo = getUserInfo(Astro.request)
 {/* 用户信息模态框 */}
 <UserInfoModal postId={postId} />
 
-{/* 用户信息模态框 */}
-<UserInfoModal postId={postId} />
-
 <style>
   /* 装饰性网格背景 */
   .comments-section::before {
@@ -296,7 +293,7 @@ return
 
     commentDiv.innerHTML = `
       <div class="comment-avatar">
-        <img src="https://www.gravatar.com/avatar/default?d=mp&s=48" alt="${userInfo.userName}" loading="lazy">
+        <img src="/api/avatar?email=${encodeURIComponent(userInfo.userEmail || '')}&size=48" alt="${userInfo.userName}" loading="lazy">
       </div>
       <div class="comment-content">
         <div class="comment-header">
