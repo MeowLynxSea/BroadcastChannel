@@ -1,0 +1,174 @@
+---
+import { commentSystem } from '../lib/comments/index.js'
+import Comment from './comment.astro'
+
+interface CommentListProps {
+  postId: string
+  comments?: any[]
+}
+
+const { postId, comments: propComments } = Astro.props
+
+// 获取文章的所有评论
+let comments = propComments
+let isLoading = false
+
+if (!comments) {
+  try {
+    await commentSystem.init()
+    const result = await commentSystem.getComments(postId)
+
+    // 处理不同的返回格式
+    comments = Array.isArray(result) ? result : (result.data || [])
+  } catch (error) {
+    console.error('Failed to load comments:', error)
+    comments = []
+  }
+}
+
+// 检查是否有评论
+const hasComments = comments && comments.length > 0
+
+// 渲染无评论状态
+function renderNoComments() {
+  return `
+    <div class="no-comments nb-box">
+      <div class="no-comments-content">
+        <i class="ri-chat-off-line"></i>
+        <p>暂无评论，来做第一个评论的人吧！</p>
+      </div>
+    </div>
+  `
+}
+
+// 渲染加载状态
+function renderLoading() {
+  return `
+    <div class="loading-comments nb-box">
+      <div class="loading-content">
+        <i class="ri-loader-4-line animate-spin"></i>
+        <span>加载评论中...</span>
+      </div>
+    </div>
+  `
+}
+
+// 扁平化评论树以正确渲染嵌套评论
+function flattenComments(commentsList, parentId = null) {
+  const result = []
+
+  for (const comment of commentsList) {
+    if (comment.parentId === parentId) {
+      result.push(comment)
+      // 递归获取回复
+      const replies = flattenComments(commentsList, comment.id)
+      result.push(...replies)
+    }
+  }
+
+  return result
+}
+
+// 获取扁平化的评论列表
+const flatComments = hasComments ? flattenComments(comments) : []
+---
+
+<div class="comments-list">
+  {isLoading ? (
+    <div set:html={renderLoading()} />
+  ) : hasComments ? (
+    flatComments.map(comment => (
+      <Comment
+        comment={comment}
+        isReply={!!comment.parentId}
+      />
+    ))
+  ) : (
+    <div set:html={renderNoComments()} />
+  )}
+</div>
+
+<style>
+  .comments-list {
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  /* 装饰性网格背景 */
+  .comments-list::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+      linear-gradient(var(--fg-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--fg-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.03;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .no-comments {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--fg-color);
+    background: var(--bg-color);
+  }
+
+  .no-comments-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .no-comments i {
+    font-size: 64px;
+    color: var(--accent-color);
+  }
+
+  .no-comments p {
+    font-family: var(--font-mono);
+    font-weight: 900;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    font-size: 1.1rem;
+  }
+
+  .loading-comments {
+    padding: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--fg-color);
+  }
+
+  .loading-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--font-mono);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+  }
+
+  .loading-comments i {
+    font-size: 24px;
+    color: var(--accent-color);
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>

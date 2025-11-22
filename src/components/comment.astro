@@ -1,0 +1,282 @@
+---
+// Individual Comment Component - NEO-BRUTALISM Style
+// Handles rendering of a single comment with proper styling
+
+interface CommentProps {
+  comment: {
+    id: string
+    userName: string
+    userEmail: string
+    content: string
+    contentHtml?: string
+    createdAt: string | Date
+    depth?: number
+  }
+  isReply?: boolean
+}
+
+const { comment, isReply = false } = Astro.props
+
+// Get user avatar URL using Gravatar with fallback
+function getUserAvatar(email: string, size = 48): string {
+  // Simple hash for consistent avatars
+  let hash = 0
+  for (let i = 0; i < email.length; i++) {
+    const char = email.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  const absHash = Math.abs(hash).toString(16).padEnd(32, '0')
+  return `https://www.gravatar.com/avatar/${absHash}?d=mp&s=${size}&r=g`
+}
+
+// Format comment date
+function formatDate(dateInput: string | number | Date): string {
+  let date: Date
+  if (typeof dateInput === 'number') {
+    // Timestamp
+    date = new Date(dateInput)
+  } else if (typeof dateInput === 'string') {
+    // ISO string
+    date = new Date(dateInput)
+  } else {
+    // Already a Date object
+    date = dateInput
+  }
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+---
+
+<div class="comment-item" data-comment-id={comment.id} data-depth={comment.depth || 0}>
+  <div class="comment-avatar">
+    <img
+      src={getUserAvatar(comment.userEmail)}
+      alt={comment.userName}
+      loading="lazy"
+      width="48"
+      height="48"
+    />
+  </div>
+
+  <div class="comment-content">
+    <div class="comment-header">
+      <span class="comment-author">{comment.userName}</span>
+      <span class="comment-time">{formatDate(comment.createdAt)}</span>
+    </div>
+    <div class="comment-body" set:html={comment.contentHtml || comment.content} />
+  </div>
+</div>
+
+<style>
+  .comment-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    border: var(--border-width) solid var(--fg-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    background: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    gap: 16px;
+    position: relative;
+  }
+
+  /* Nested comment indentation */
+  .comment-item[data-depth="1"] {
+    margin-left: 40px;
+    border-color: var(--secondary-color);
+  }
+
+  .comment-item[data-depth="2"] {
+    margin-left: 80px;
+    border-color: var(--gray-light);
+  }
+
+  .comment-item:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+    border-color: var(--accent-color);
+  }
+
+  .comment-avatar {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    border: var(--border-width) solid var(--fg-color);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .comment-item:hover .comment-avatar {
+    transform: rotate(-2deg);
+    border-color: var(--accent-color);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+  }
+
+  .comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--gray-light);
+  }
+
+  .comment-content {
+    flex: 1;
+  }
+
+  .comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .comment-author {
+    font-weight: 900;
+    color: var(--fg-color);
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    font-size: 1.1rem;
+  }
+
+  .comment-time {
+    color: var(--secondary-color);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: bold;
+  }
+
+  .comment-body {
+    color: var(--fg-color);
+    line-height: 1.6;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    word-wrap: break-word;
+  }
+
+  .comment-body p {
+    margin: 14px 0;
+    position: relative;
+  }
+
+  .comment-body p:first-child {
+    margin-top: 0;
+  }
+
+  .comment-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .comment-body a {
+    color: var(--accent-color);
+    text-decoration: none;
+    border-bottom: var(--border-width) solid var(--accent-color);
+    transition: all 0.2s ease;
+    font-weight: bold;
+    position: relative;
+  }
+
+  .comment-body a:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    transform: translate(-1px, -1px);
+    box-shadow: 2px 2px 0 var(--fg-color);
+  }
+
+  .comment-body code {
+    background: var(--gray-light);
+    padding: 3px 6px;
+    border: var(--border-width) solid var(--fg-color);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    display: inline-block;
+    box-shadow: 2px 2px 0 var(--fg-color);
+  }
+
+  .comment-body pre {
+    background: var(--gray-light);
+    padding: 16px;
+    border: var(--border-width) solid var(--fg-color);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .comment-body pre::before {
+    content: "SOURCE_CODE";
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--fg-color);
+    color: var(--bg-color);
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+  }
+
+  .comment-body blockquote {
+    border: var(--border-width) solid var(--fg-color);
+    padding: 16px;
+    margin: 16px 0;
+    color: var(--fg-color);
+    background: var(--bg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    font-style: italic;
+    position: relative;
+  }
+
+  .comment-body blockquote::before {
+    content: ">";
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    background: var(--bg-color);
+    padding: 0 8px;
+    color: var(--accent-color);
+    font-weight: bold;
+    font-family: var(--font-mono);
+  }
+
+  @media (max-width: 768px) {
+    .comment-item {
+      padding: 16px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .comment-avatar {
+      width: 40px;
+      height: 40px;
+    }
+
+    .comment-header {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .comment-author {
+      font-size: 1rem;
+    }
+
+    .comment-item[data-depth="1"] {
+      margin-left: 20px;
+    }
+
+    .comment-item[data-depth="2"] {
+      margin-left: 40px;
+    }
+  }
+</style>

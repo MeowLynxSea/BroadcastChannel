@@ -22,14 +22,29 @@ export async function onRequest(context, next) {
 
   const response = await next()
 
-  if (!response.bodyUsed) {
-    if (response.headers.get('Content-type') === 'text/html') {
-      response.headers.set('Speculation-Rules', '"/rules/prefetch.json"')
+  // 创建新的response对象来避免immutable错误
+  if (!response.bodyUsed && response.status === 200) {
+    const contentType = response.headers.get('Content-type')
+
+    // 复制原始headers
+    const newHeaders = new Headers(response.headers)
+
+    // 添加新的headers
+    if (contentType === 'text/html') {
+      newHeaders.set('Speculation-Rules', '"/rules/prefetch.json"')
     }
 
-    if (!response.headers.has('Cache-Control')) {
-      response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300')
+    if (!newHeaders.has('Cache-Control')) {
+      newHeaders.set('Cache-Control', 'public, max-age=300, s-maxage=300')
     }
+
+    // 创建新的response
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders,
+    })
   }
+
   return response
 }

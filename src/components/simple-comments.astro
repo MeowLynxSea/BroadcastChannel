@@ -1,0 +1,366 @@
+---
+// Refactored Comments System - Modular NEO-BRUTALISM Style
+import CommentList from './comment-list.astro'
+import CommentForm from './comment-form.astro'
+import UserInfoModal from './user-info-modal.astro'
+
+interface SimpleCommentsProps {
+  postId: string
+}
+
+const { postId } = Astro.props
+
+// 从Cookie获取用户信息
+function getUserInfo(request: Request) {
+  const cookieHeader = request.headers.get('cookie') || ''
+  const userInfoCookie = cookieHeader
+    .split(';')
+    .find(cookie => cookie.trim().startsWith('blog_user_info='))
+
+  if (userInfoCookie) {
+    try {
+      return JSON.parse(decodeURIComponent(userInfoCookie.split('=')[1]))
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
+const userInfo = getUserInfo(Astro.request)
+---
+
+<section class="comments-section nb-box fade-in-up">
+  <header class="section-header">
+    <h2 class="section-title">
+      <i class="ri-chat-3-line"></i>
+      评论区
+    </h2>
+    <div class="section-divider"></div>
+  </header>
+
+  <div class="comments-container">
+    <!-- 评论列表 -->
+    <div class="comments-list-wrapper">
+      <CommentList postId={postId} />
+    </div>
+
+    <!-- 评论表单 -->
+    <div class="comment-form-wrapper">
+      <CommentForm
+        postId={postId}
+        userInfo={userInfo}
+      />
+    </div>
+  </div>
+
+  {/* 消息显示区域 */}
+  <div id="comment-messages" class="comment-messages"></div>
+</section>
+
+{/* 用户信息模态框 */}
+<UserInfoModal postId={postId} />
+
+{/* 用户信息模态框 */}
+<UserInfoModal postId={postId} />
+
+<style>
+  /* 装饰性网格背景 */
+  .comments-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+      linear-gradient(var(--fg-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--fg-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.03;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .comments-section {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto 40px auto;
+    padding: 40px;
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    background: var(--bg-color);
+    transition: all 0.2s ease;
+  }
+
+  .comments-section:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: calc(var(--shadow-distance) + 4px) calc(var(--shadow-distance) + 4px) 0 var(--accent-color);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: var(--border-width) solid var(--fg-color);
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 1.5rem;
+    background: var(--fg-color);
+    color: var(--bg-color);
+    padding: 8px 20px;
+    font-weight: 900;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title i {
+    color: var(--accent-color);
+  }
+
+  .section-title::after {
+    content: "_";
+    color: var(--accent-color);
+    animation: blink 1s infinite;
+    margin-left: 8px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .section-divider {
+    flex-grow: 1;
+    border-bottom: 1px dashed var(--fg-color);
+    height: 1px;
+  }
+
+  .comments-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* 消息样式 */
+  .comment-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9998;
+  }
+
+  .comment-message {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    max-width: 300px;
+    word-wrap: break-word;
+    animation: slideIn 0.2s ease;
+  }
+
+  .comment-message.message-success {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    animation: pulse-border 1s ease-in-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(255, 85, 0, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 85, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 85, 0, 0); }
+  }
+
+  @media (max-width: 768px) {
+    .comments-section {
+      padding: 20px;
+      margin: 16px;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<script>
+  // Modal handling
+  document.addEventListener('click', (e) => {
+    // Handle modal backdrop clicks
+    if (e.target.matches('.modal-backdrop')) {
+      const modal = e.target.closest('.user-info-modal')
+      modal.classList.add('hidden')
+    }
+
+    // Handle modal close buttons
+    if (e.target.matches('.modal-close')) {
+      const modal = e.target.closest('.user-info-modal')
+      modal.classList.add('hidden')
+    }
+  })
+
+  // Character counter
+  document.addEventListener('input', (e) => {
+    if (e.target.matches('.comment-textarea')) {
+      const count = e.target.value.length
+      const counter = e.target.closest('form')?.querySelector('.char-count')
+      if (counter) {
+        counter.textContent = `${count}/2000`
+        counter.style.color = count > 1800 ? 'var(--warning-color, #FF6B35)' : 'var(--fg-color)'
+      }
+    }
+  })
+
+  // URL parameter handling
+  const urlParams = new URLSearchParams(window.location.search)
+  const messages = document.getElementById('comment-messages')
+
+  // Show success message
+  if (urlParams.get('comment-success') === 'true') {
+    showMessage('评论发表成功！', 'success')
+    addNewCommentToDOM()
+
+    // Clear URL parameters
+    const newUrl = new URL(window.location)
+    newUrl.searchParams.delete('comment-success')
+    window.history.replaceState({}, '', newUrl)
+  }
+
+  // Show error message
+  const errorMsg = urlParams.get('comment-error')
+  if (errorMsg) {
+    showMessage(decodeURIComponent(errorMsg), 'error')
+
+    // Clear URL parameters
+    const newUrl = new URL(window.location)
+    newUrl.searchParams.delete('comment-error')
+    window.history.replaceState({}, '', newUrl)
+  }
+
+  // Add new comment to DOM dynamically
+  function addNewCommentToDOM() {
+    // Get user info from cookies
+    const cookieHeader = document.cookie
+    const userInfoCookie = cookieHeader
+      .split(';')
+      .find(cookie => cookie.trim().startsWith('blog_user_info='))
+
+    if (!userInfoCookie)
+return
+
+    let userInfo
+    try {
+      userInfo = JSON.parse(decodeURIComponent(userInfoCookie.split('=')[1]))
+    }
+ catch {
+      return
+    }
+
+    // Get comment content from localStorage
+    const content = localStorage.getItem('pending-comment') || ''
+    if (!content)
+return
+
+    // Create comment element
+    const commentDiv = document.createElement('div')
+    commentDiv.className = 'comment-item'
+    commentDiv.setAttribute('data-comment-id', 'new')
+
+    commentDiv.innerHTML = `
+      <div class="comment-avatar">
+        <img src="https://www.gravatar.com/avatar/default?d=mp&s=48" alt="${userInfo.userName}" loading="lazy">
+      </div>
+      <div class="comment-content">
+        <div class="comment-header">
+          <span class="comment-author">${userInfo.userName}</span>
+          <span class="comment-time">刚刚</span>
+        </div>
+        <div class="comment-body">${content}</div>
+      </div>
+    `
+
+    // Find comments list container
+    const commentsContainer = document.querySelector('.comments-list')
+    if (commentsContainer) {
+      // Remove "no comments" message if present
+      const noComments = commentsContainer.querySelector('.no-comments')
+      if (noComments) {
+        noComments.remove()
+      }
+
+      // Add animation
+      commentDiv.style.opacity = '0'
+      commentDiv.style.transform = 'translateY(-20px)'
+
+      // Insert at the beginning
+      commentsContainer.insertBefore(commentDiv, commentsContainer.firstChild)
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        commentDiv.style.transition = 'all 0.3s ease'
+        commentDiv.style.opacity = '1'
+        commentDiv.style.transform = 'translateY(0)'
+      })
+
+      // Clear pending comment
+      localStorage.removeItem('pending-comment')
+    }
+  }
+
+  // Save comment content to localStorage on form submit
+  document.addEventListener('submit', (e) => {
+    if (e.target.matches('.comment-form')) {
+      const textarea = e.target.querySelector('.comment-textarea')
+      if (textarea && textarea.value.trim()) {
+        localStorage.setItem('pending-comment', textarea.value.trim())
+      }
+    }
+  })
+
+  // Show message function
+  function showMessage(text, type) {
+    if (!messages)
+return
+
+    const message = document.createElement('div')
+    message.className = `comment-message message-${type}`
+    message.textContent = text
+
+    messages.appendChild(message)
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      if (message.parentNode) {
+        message.parentNode.removeChild(message)
+      }
+    }, 3000)
+  }
+</script>

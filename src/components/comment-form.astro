@@ -1,0 +1,221 @@
+---
+// Comment Form Component - NEO-BRUTALISM Style
+// Handles comment submission with proper validation
+
+interface CommentFormProps {
+  postId: string
+  userInfo?: {
+    userName: string
+    userEmail: string
+  }
+  parentId?: string
+  isReply?: boolean
+}
+
+const { postId, userInfo, parentId, isReply = false } = Astro.props
+
+const formAction = `/api/comments/${postId}/submit`
+const preflightAction = `/api/comments/${postId}/preflight`
+---
+
+<div class="comment-form-container nb-box">
+  {userInfo ? (
+    <form action={formAction} method="POST" class="comment-form" data-reply={isReply}>
+      {parentId && <input type="hidden" name="parentId" value={parentId} />}
+
+      <div class="user-info">
+        <img
+          src={`https://www.gravatar.com/avatar/${userInfo.userEmail.toLowerCase() || 'default'}?d=mp&s=40`}
+          alt={userInfo.userName}
+          class="user-avatar"
+          width="40"
+          height="40"
+        >
+        <span class="user-name">{userInfo.userName}</span>
+        <button
+          type="button"
+          class="change-user-btn"
+          onclick={`document.getElementById('user-info-modal-${postId}').classList.remove('hidden')`}
+        >
+          切换账号
+        </button>
+      </div>
+
+      <div class="form-group">
+        <textarea
+          class="comment-textarea nb-input"
+          name="content"
+          placeholder={isReply ? "写下你的回复..." : "写下你的评论..."}
+          maxlength="2000"
+          required
+          rows="5"
+        ></textarea>
+        <div class="form-footer">
+          <span class="char-count">0/2000</span>
+          <button type="submit" class="submit-btn btn btn-primary">
+            <i class="ri-send-plane-line"></i>
+            {isReply ? "回复评论" : "发送评论"}
+          </button>
+        </div>
+      </div>
+    </form>
+  ) : (
+    <div class="comment-prompt">
+      <button
+        type="button"
+        class="start-comment-btn btn btn-accent"
+        onclick={`document.getElementById('user-info-modal-${postId}').classList.remove('hidden')`}
+      >
+        <i class="ri-quill-pen-line"></i>
+        {isReply ? "回复评论" : "写评论"}
+      </button>
+    </div>
+  )}
+</div>
+
+<style>
+  .comment-form-container {
+    padding: 24px;
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .comment-form-container::before {
+    content: "COMMENT_FORM";
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--fg-color);
+    color: var(--bg-color);
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+  }
+
+  .comment-form-container[data-reply="true"]::before {
+    content: "REPLY_FORM";
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: var(--border-width) solid var(--fg-color);
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius);
+    object-fit: cover;
+    border: var(--border-width) solid var(--fg-color);
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+    transition: all 0.2s ease;
+  }
+
+  .user-avatar:hover {
+    transform: rotate(-2deg);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--accent-color);
+  }
+
+  .user-name {
+    font-weight: 900;
+    color: var(--fg-color);
+    flex: 1;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    font-size: 1rem;
+  }
+
+  .change-user-btn {
+    background: var(--bg-color);
+    border: var(--border-width) solid var(--fg-color);
+    color: var(--fg-color);
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-distance) var(--shadow-distance) 0 var(--fg-color);
+  }
+
+  .change-user-btn:hover {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border-color: var(--accent-color);
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-distance) + 2px) calc(var(--shadow-distance) + 2px) 0 var(--fg-color);
+  }
+
+  .change-user-btn:active {
+    transform: translate(var(--shadow-distance), var(--shadow-distance));
+    box-shadow: 0 0 0 var(--fg-color);
+  }
+
+  .comment-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    resize: vertical;
+    border-radius: var(--border-radius);
+  }
+
+  .form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+
+  .char-count {
+    font-size: 12px;
+    color: var(--fg-color);
+    background: var(--gray-light);
+    padding: 4px 8px;
+    border: var(--border-width) solid var(--fg-color);
+    font-family: var(--font-mono);
+    font-weight: bold;
+  }
+
+  .comment-prompt {
+    text-align: center;
+    padding: 32px;
+    border: var(--border-width) dashed var(--accent-color);
+    border-radius: var(--border-radius);
+  }
+
+  .start-comment-btn {
+    padding: 16px 32px;
+    font-size: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .comment-form-container {
+      padding: 16px;
+    }
+
+    .form-footer {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .start-comment-btn {
+      font-size: 14px;
+      padding: 12px 24px;
+    }
+  }
+</style>

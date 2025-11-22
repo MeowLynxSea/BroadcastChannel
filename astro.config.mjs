@@ -49,6 +49,9 @@ export default defineConfig({
       : []),
   ],
   vite: {
+    server: {
+      allowedHosts: ['dv31h7gz2.neiwangyun.net', 'tun.0v0.live'],
+    },
     ssr: {
       noExternal: process.env.DOCKER ? !!process.env.DOCKER : undefined,
       external: [
@@ -84,7 +87,7 @@ export default defineConfig({
               'node:child_process',
               'node:inspector',
             ]
-          : [],
+          : ['better-sqlite3'], // 为 Node 和 Vercel 环境添加 SQLite3 外部模块
       ],
     },
   },
