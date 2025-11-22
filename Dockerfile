@@ -20,12 +20,19 @@ ARG SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_PROJECT
 
-RUN export $(cat .env.example) && \
-    export DOCKER=true && \
-    pnpm run build
+# 复制环境变量并设置 Docker 标志
+COPY .env.example .env
+ENV DOCKER=true
+
+# 安装构建依赖（SQLite 需要编译工具）
+RUN apk add --no-cache python3 make g++
+
+RUN pnpm run build
 
 FROM base AS runtime
-# COPY --from=prod-deps /app/node_modules ./node_modules
+# 安装运行时依赖
+RUN apk add --no-cache sqlite
+
 COPY --from=build /app/dist ./dist
 
 ENV HOST=0.0.0.0
