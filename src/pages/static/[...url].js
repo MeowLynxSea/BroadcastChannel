@@ -36,8 +36,10 @@ function cleanupCache() {
 setInterval(cleanupCache, 10 * 60 * 1000)
 
 export async function GET({ request, params, url }) {
+  let target = null
+
   try {
-    const target = new URL(params.url + url.search)
+    target = new URL(params.url + url.search)
     if (!targetWhitelist.some(domain => target.hostname.endsWith(domain))) {
       return Response.redirect(target.toString(), 302)
     }
@@ -82,10 +84,63 @@ export async function GET({ request, params, url }) {
     return new Response(response.body, response)
   }
   catch (error) {
-    // Check if this is a timeout error
-    if (error.name === 'TimeoutError') {
-      return new Response('Request timeout', { status: 408 })
+    // Log the error for debugging
+    console.error(`Static proxy error for ${target?.toString() || 'unknown'}:`, {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      stack: error.stack,
+    })
+
+    // Determine appropriate status and error message based on error type
+    let errorMessage = 'Failed to fetch resource'
+    let statusCode = 500
+
+    if (error.name === 'TimeoutError' || error.code === 'TIMEOUT') {
+      errorMessage = `Request timeout after 120 seconds`
+      statusCode = 408
     }
-    return new Response(error.message, { status: 500 })
+    else if (error.code === 'ECONNRESET') {
+      errorMessage = 'Connection was reset by the remote server'
+      statusCode = 502
+    }
+    else if (error.code === 'ENOTFOUND') {
+      errorMessage = 'Domain name resolution failed'
+      statusCode = 502
+    }
+    else if (error.code === 'ECONNREFUSED') {
+      errorMessage = 'Connection refused by remote server'
+      statusCode = 502
+    }
+    else if (error.code === 'ETIMEDOUT') {
+      errorMessage = 'Connection timed out'
+      statusCode = 504
+    }
+    else if (error.message.includes('fetch failed')) {
+      // Extract more specific error from fetch failed message
+      const networkError = error.message.replace(/^fetch failed:\s*/, '')
+      errorMessage = `Network error: ${networkError}`
+      statusCode = 502
+    }
+
+    // Return a detailed error response
+    return new Response(
+      JSON.stringify({
+        error: errorMessage,
+        details: {
+          url: target?.toString() || 'unknown',
+          errorType: error.name,
+          code: error.code || 'UNKNOWN',
+          originalMessage: error.message,
+        },
+      }),
+      {
+        status: statusCode,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
   }
 }
